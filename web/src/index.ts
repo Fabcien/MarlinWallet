@@ -1,0 +1,1374 @@
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+import {Wallet} from 'ecash-wallet';
+import {ChronikClient} from 'chronik-client';
+import {DEFAULT_DUST_SATS} from 'ecash-lib';
+import PullToRefresh from 'pulltorefreshjs';
+import {TransactionHistoryManager} from './transaction-history';
+import {sendMessageToBackend, webViewLog, webViewError} from './common';
+import {calculateTransactionAmountSats, satsToXec, calculateMaxSpendableAmount, estimateTransactionFee} from './amount';
+import {getAddress, WalletData, sendTransaction} from './wallet';
+import {getMnemonic, storeMnemonic, loadMnemonic, generateMnemonic, validateMnemonic} from './mnemonic';
+import {copyAddress, isValidECashAddress} from './address';
+import {generateQRCode, hideNoCameraFallback, stopQRScanner, startQRScanner} from './qrcode';
+
+// Styles
+import './main.css';
+
+// Icons
+import backArrowIcon from './back-arrow.svg';
+import ecashLogo from './ecash.svg';
+import editIcon from './edit.svg';
+import historyIcon from './history.svg';
+import noCameraIcon from './camera.svg';
+import qrCodeIcon from './qrcode.svg';
+import settingsIcon from './settings.svg';
+
+// ============================================================================
+// GLOBALS
+// ============================================================================
+
+// Transaction state interface
+interface PendingTransaction {
+    // Positive = receive, negative = send, 0 = receive (in satoshis)
+    amountSats: number;
+    state: 'pending_finalization' | 'finalized';
+}
+
+// Get DOM elements
+const mainScreen = document.getElementById('wallet-card') as HTMLElement;
+const sendScreen = document.getElementById('send-screen') as HTMLElement;
+const settingsScreen = document.getElementById('settings-screen') as HTMLElement;
+const historyScreen = document.getElementById('history-screen') as HTMLElement;
+
+// Wallet state
+let wallet: WalletData | null = null;
+let ecashWallet: Wallet | null = null;
+let wsEndpoint: any = null;
+
+let chronik: ChronikClient;
+
+// Balance state - separate available and transitional (not finalized yet) 
+// balances (in satoshis)
+let availableBalanceSats = 0; // Only finalized amounts in satoshis
+let transitionalBalanceSats = 0; // Only non finalized amounts in satoshis
+
+// Pending transactions - transactions that are not yet finalized
+let pendingAmounts: { [txid: string]: PendingTransaction } = {};
+
+// Create global instance of TransactionHistoryManager
+let transactionHistory: TransactionHistoryManager | null = null;
+
+// ============================================================================
+// GENERAL UTILITY FUNCTIONS
+// ============================================================================
+
+// Show error modal with proper title
+function showErrorModal(title: string, message: string) {
+    const errorModalOverlay = document.getElementById('error-modal-overlay');
+    const errorModalTitle = document.querySelector('.error-modal-title');
+    const errorModalMessage = document.querySelector('.error-modal-message');
+    const errorModalClose = document.getElementById('error-modal-close');
+
+    errorModalTitle.textContent = title;
+    errorModalMessage.textContent = message;
+
+    errorModalClose.addEventListener('click', () => {
+        errorModalOverlay.style.display = 'none';
+    });
+    
+    errorModalOverlay.style.display = 'flex';
+}
+
+function showLoadingScreen(message: string) {
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+        const loadingText = loadingEl.querySelector('.loading-text');
+        if (loadingText) {
+            loadingText.textContent = message;
+        }
+    }
+}
+
+function hideLoadingScreen() {
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'none';
+    }
+}
+
+// ============================================================================
+// NAVIGATION FUNCTIONS
+// ============================================================================
+
+function showMainScreen() {
+    if (mainScreen) {
+        mainScreen.classList.remove('hidden');
+    }
+    if (sendScreen) {
+        sendScreen.classList.add('hidden');
+    }
+    if (settingsScreen) {
+        settingsScreen.classList.add('hidden');
+    }
+    if (historyScreen) {
+        historyScreen.classList.add('hidden');
+    }
+    
+    // Reset the recipient address field to readonly for QR scans
+    const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
+    if (recipientAddressInput) {
+        recipientAddressInput.setAttribute('readonly', 'readonly');
+    }
+}
+
+async function showSendScreen() {
+    // Always refresh the available utxos before showing the send screen
+    await syncWallet();
+
+    if (mainScreen) {
+        mainScreen.classList.add('hidden');
+    }
+    if (sendScreen) {
+        sendScreen.classList.remove('hidden');
+    }
+    
+    // Reset all form fields and validation states
+    const recipientInput = document.getElementById('recipient-address') as HTMLInputElement;
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
+    const feeDisplay = document.getElementById('fee-display');
+    
+    // Clear recipient address field and validation states
+    if (recipientInput) {
+        recipientInput.value = '';
+        recipientInput.classList.remove('valid', 'invalid');
+        recipientInput.removeAttribute('readonly'); // Allow editing for manual entry
+    }
+    
+    // Reset amount field and validation states
+    if (sendAmountInput) {
+        sendAmountInput.value = '5.46'; // Prefill with minimum valid amount
+        sendAmountInput.classList.remove('valid', 'invalid');
+    }
+    
+    // Reset slider
+    if (amountSlider) {
+        amountSlider.value = '5.46';
+    }
+    
+    // Hide fee display
+    if (feeDisplay) {
+        feeDisplay.style.display = 'none';
+    }
+    
+    // Update send screen limits based on current wallet state
+    updateSendScreenLimits();
+    
+    // Validate amount field after reset
+    validateAmountField();
+    
+    // Initialize slider and marks
+    updateSliderFromInput();
+    const maxSpendable = calculateMaxSpendableAmount(ecashWallet);
+    updateSliderMarks(5.46, maxSpendable);
+}
+
+async function openSendScreenWithAddress(address: string) {
+    // First show the send screen (this will reset everything)
+    await showSendScreen();
+    
+    // Then set the address and make it readonly
+    const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
+    if (recipientAddressInput) {
+        recipientAddressInput.value = address;
+        recipientAddressInput.setAttribute('readonly', 'readonly');
+        // Validate the address after setting it
+        validateAddressField();
+        // Trigger fee calculation since address is now valid and amount is pre-filled
+        updateFeeDisplay();
+    }
+}
+
+async function openSendScreenForManualEntry() {
+    stopQRScanner(true); // Force close the modal
+    hideNoCameraFallback();
+    // First show the send screen (this will reset everything)
+    await showSendScreen();
+    
+    // The form is already reset by showSendScreen(), no additional action needed
+    // The address field is already cleared and editable
+}
+
+// History screen functions
+function showHistoryScreen() {
+    if (mainScreen) {
+        mainScreen.classList.add('hidden');
+    }
+    if (sendScreen) {
+        sendScreen.classList.add('hidden');
+    }
+    if (settingsScreen) {
+        settingsScreen.classList.add('hidden');
+    }
+    if (historyScreen) {
+        historyScreen.classList.remove('hidden');
+    }
+    
+    // Load transaction history when showing the screen (reset to first page)
+    const address = getAddress(ecashWallet);
+    if (address) {
+        transactionHistory.loadTransactionHistory(chronik, address, true);
+    }
+    
+    // Setup scroll detection for infinite loading
+    setTimeout(() => {
+        const transactionList = document.getElementById('transaction-list');
+        if (transactionList) {
+            transactionList.addEventListener('scroll', () => transactionHistory.handleScroll());
+        }
+    }, 100); // Small delay to ensure DOM is ready
+}
+
+// Settings screen functions
+function showSettingsScreen() {
+    if (mainScreen) {
+        mainScreen.classList.add('hidden');
+    }
+    if (sendScreen) {
+        sendScreen.classList.add('hidden');
+    }
+    if (settingsScreen) {
+        settingsScreen.classList.remove('hidden');
+    }
+    if (historyScreen) {
+        historyScreen.classList.add('hidden');
+    }
+    
+    // Always update the mnemonic display when showing settings
+    updateMnemonicDisplay();
+}
+
+// These are required for the webview html button bindings
+(window as any).openHistory = showHistoryScreen;
+(window as any).openSettings = showSettingsScreen;
+
+// ============================================================================
+// SEND SCREEN FUNCTIONS
+// ============================================================================
+
+// Validate address field and update UI
+function validateAddressField() {
+    const recipientInput = document.getElementById('recipient-address') as HTMLInputElement;
+    if (!recipientInput) return;
+    
+    const address = recipientInput.value.trim();
+    
+    // Clear previous validation states
+    recipientInput.classList.remove('invalid');
+    recipientInput.classList.remove('valid');
+    
+    if (address === '') {
+        // Empty field - no validation state
+        return;
+    }
+    
+    if (isValidECashAddress(address)) {
+        recipientInput.classList.add('valid');
+    } else {
+        recipientInput.classList.add('invalid');
+    }
+}
+
+// Update send screen with maximum spendable amount
+function updateSendScreenLimits() {
+    const maxSpendable = calculateMaxSpendableAmount(ecashWallet);
+    
+    // Update amount input max attribute
+    const amountInput = document.getElementById('send-amount') as HTMLInputElement;
+    if (amountInput) {
+        amountInput.max = maxSpendable.toString();
+    }
+    
+    // Update slider max value and label
+    const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
+    if (amountSlider) {
+        amountSlider.max = maxSpendable.toString();
+    }
+    
+    // Update slider max label
+    const sliderMaxLabel = document.getElementById('slider-max-label');
+    if (sliderMaxLabel) {
+        sliderMaxLabel.textContent = `${maxSpendable.toFixed(2)} XEC`;
+    }
+}
+
+// Update fee display
+function updateFeeDisplay() {
+    const recipientInput = document.getElementById('recipient-address') as HTMLInputElement;
+    const amountInput = document.getElementById('send-amount') as HTMLInputElement;
+    const feeDisplay = document.getElementById('fee-display');
+    
+    if (!recipientInput || !amountInput || !feeDisplay) {
+        return;
+    }
+    
+    const recipientAddress = recipientInput.value.trim();
+    let amount = parseFloat(amountInput.value);
+    
+    // Hide if address or amount is invalid
+    if (!recipientAddress || !isValidECashAddress(recipientAddress) || isNaN(amount) || amount <= 0) {
+        feeDisplay.style.display = 'none';
+        return;
+    }
+
+    let errorMessage: string | null = null;
+
+    // Check for dust threshold
+    const dustXEC = satsToXec(Number(DEFAULT_DUST_SATS));
+    if (amount < dustXEC) {
+        errorMessage = `Amount is too small, minimum is ${dustXEC} XEC`;
+    }
+    
+    // Try to estimate fee for the requested amount
+    let feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount);
+
+    // Insufficient balance - calculate for max spendable amount
+    if (!feeEstimate) {
+        amount = calculateMaxSpendableAmount(ecashWallet);
+        feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount);
+        errorMessage = `Insufficient balance - Max ${amount.toFixed(2)} XEC`;
+    }
+
+    // Build the html fee block heading depending on the error condition
+    let feeBlockHeading = 'Transaction Details';
+    let feeBlockHeadingClasses = 'title';
+    if (errorMessage) {
+        feeDisplay.classList.add('error');
+        feeBlockHeading = errorMessage;
+        feeBlockHeadingClasses += ' error';
+    } else {
+        feeDisplay.classList.remove('error');
+    }
+    
+    // Build the HTML with conditional styling
+    let html =
+        `<div class="fee-info">
+            <div class="fee-item ${feeBlockHeadingClasses}">
+                ${feeBlockHeading}
+            </div>
+            <div class="fee-item">
+                <span class="fee-label">Amount:</span>
+                <span class="fee-value">${amount.toFixed(2)} XEC</span>
+            </div>
+            <div class="fee-item">
+                <span class="fee-label">Network Fee:</span>
+                <span class="fee-value">${feeEstimate?.feeXEC.toFixed(2)} XEC</span>
+            </div>
+            <div class="fee-item total">
+                <span class="fee-label">Total:</span>
+                <span class="fee-value">${feeEstimate?.totalXEC.toFixed(2)} XEC</span>
+            </div>
+        </div>
+    `;
+    
+    feeDisplay.innerHTML = html;
+    feeDisplay.style.display = 'block';
+}
+
+// Amount input handling to prevent more than 2 decimals
+function handleAmountInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    
+    // Allow only numbers and one decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, '');
+    
+    // Prevent multiple decimal points
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) {
+        input.value = parts[0] + '.' + parts.slice(1).join('');
+        return;
+    }
+    
+    // If there's a decimal point, limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+        input.value = parts[0] + '.' + parts[1].substring(0, 2);
+        return;
+    }
+    
+    // Update the input value if it was cleaned
+    if (cleanValue !== value) {
+        input.value = cleanValue;
+    }
+    
+    // Update slider to match input value
+    updateSliderFromInput();
+    
+    // Run validation after input is processed
+    validateAmountField();
+}
+
+// Handle slider input
+function handleSliderInput(event: Event) {
+    const slider = event.target as HTMLInputElement;
+    const value = parseFloat(slider.value);
+    
+    // Update the amount input field immediately for visual feedback
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    if (sendAmountInput) {
+        sendAmountInput.value = value.toFixed(2);
+    }
+    
+    // Validate immediately without throttling
+    validateAmountField();
+}
+
+// Update slider from input field
+function updateSliderFromInput() {
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
+    
+    if (!sendAmountInput || !amountSlider) return;
+    
+    const value = parseFloat(sendAmountInput.value);
+    const minAmount = 5.46;
+    const maxAmount = calculateMaxSpendableAmount(ecashWallet);
+    
+    // Clamp value to slider range
+    const clampedValue = Math.max(minAmount, Math.min(value, maxAmount));
+    
+    // Update slider value
+    amountSlider.value = clampedValue.toString();
+    
+    // Update slider max if balance changed
+    if (maxAmount !== parseFloat(amountSlider.max)) {
+        amountSlider.max = maxAmount.toString();
+        const sliderMaxLabel = document.getElementById('slider-max-label');
+        if (sliderMaxLabel) {
+            sliderMaxLabel.textContent = `${maxAmount.toFixed(2)} XEC`;
+        }
+        
+        // Update slider marks for new range
+        updateSliderMarks(minAmount, maxAmount);
+    }
+}
+
+// Update slider marks based on current range
+function updateSliderMarks(minAmount: number, maxAmount: number) {
+    const marks = document.querySelectorAll('.mark');
+    const range = maxAmount - minAmount;
+    
+    marks.forEach((mark, index) => {
+        const percentage = ((index + 1) * 10); // 10%, 20%, 30%, etc. (skipping 0% and 100%)
+        const actualValue = minAmount + (range * percentage / 100);
+        const displayValue = actualValue.toFixed(2);
+        
+        // Update the mark's data attribute for reference
+        mark.setAttribute('data-value', displayValue);
+        
+        // Add a subtle tooltip effect on hover
+        (mark as HTMLElement).title = `${displayValue} XEC`;
+    });
+}
+
+// Amount validation functions
+function validateAmountField() {
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    const confirmSendBtn = document.getElementById('confirm-send') as HTMLButtonElement;
+    
+    if (!sendAmountInput || !confirmSendBtn) return;
+    
+    const amount = parseFloat(sendAmountInput.value);
+    const minAmount = 5.46;
+    const maxAmount = calculateMaxSpendableAmount(ecashWallet);
+    
+    // Clear previous validation states
+    sendAmountInput.classList.remove('invalid');
+    sendAmountInput.classList.remove('valid');
+    
+    // Check if amount is valid
+    if (isNaN(amount) || amount <= 0) {
+        sendAmountInput.classList.add('invalid');
+        confirmSendBtn.disabled = true;
+        confirmSendBtn.textContent = 'Enter Amount';
+        return;
+    }
+    
+    if (amount < minAmount) {
+        sendAmountInput.classList.add('invalid');
+        confirmSendBtn.disabled = true;
+        confirmSendBtn.textContent = `Min: ${minAmount} XEC`;
+        return;
+    }
+    
+    if (amount > maxAmount) {
+        sendAmountInput.classList.add('invalid');
+        confirmSendBtn.disabled = true;
+        confirmSendBtn.textContent = `Max: ${maxAmount.toFixed(2)} XEC`;
+        return;
+    }
+    
+    // Amount is valid
+    sendAmountInput.classList.add('valid');
+    confirmSendBtn.disabled = false;
+    confirmSendBtn.textContent = 'Send';
+}
+
+async function validateAndSend() {
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
+    
+    if (!sendAmountInput || !recipientAddressInput) return;
+    
+    const amount = parseFloat(sendAmountInput.value);
+    const address = recipientAddressInput.value.trim();
+    
+    // Validate address
+    if (!address || !isValidECashAddress(address)) {
+        recipientAddressInput.focus();
+        return;
+    }
+    
+    // Validate amount
+    validateAmountField();
+    const confirmSendBtn = document.getElementById('confirm-send') as HTMLButtonElement;
+    if (confirmSendBtn.disabled) {
+        return; // Amount validation failed
+    }
+    
+    // All validations passed, proceed with sending
+    try {
+        // Convert XEC to satoshis (1 XEC = 100 satoshis)
+        const sats = Math.round(amount * 100);
+        await sendTransaction(ecashWallet, address, sats);
+        webViewLog(`Sent ${amount} XEC to ${address}`);
+    } catch (error) {
+        webViewError('Failed to send transaction:', error);
+    } finally {
+        // Return to main screen
+        showMainScreen();
+    }
+}
+
+// ============================================================================
+// SETTINGS SCREEN FUNCTIONS
+// ============================================================================
+
+// Mnemonic management functions
+function updateMnemonicDisplay() {
+    const mnemonicText = document.getElementById('mnemonic-text') as HTMLTextAreaElement;
+    const walletMnemonic = getMnemonic(wallet);
+    if (mnemonicText && walletMnemonic) {
+        // mnemonicText.value = wallet.mnemonic;
+        mnemonicText.value = walletMnemonic;
+    }
+}
+
+function showMnemonicEditModal() {
+    const modal = document.getElementById('mnemonic-edit-modal');
+    if (modal) {
+        const editText = document.getElementById('mnemonic-edit-text') as HTMLTextAreaElement;
+        const validation = document.getElementById('mnemonic-validation');
+        
+        if (editText) {
+            const walletMnemonic = getMnemonic(wallet); 
+            editText.value = walletMnemonic ? walletMnemonic : '';
+        }
+        
+        if (validation) {
+            validation.style.display = 'none';
+        }
+        
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+    }
+}
+
+function hideMnemonicEditModal() {
+    const modal = document.getElementById('mnemonic-edit-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
+}
+
+function showValidationMessage(message: string, isError: boolean = true) {
+    const validation = document.getElementById('mnemonic-validation');
+    if (validation) {
+        validation.textContent = message;
+        validation.className = `validation-message ${isError ? 'error' : 'success'}`;
+        validation.style.display = 'block';
+    }
+}
+
+function hideValidationMessage() {
+    const validation = document.getElementById('mnemonic-validation');
+    if (validation) {
+        validation.style.display = 'none';
+    }
+}
+
+async function saveMnemonic(newMnemonic: string) {
+    try {
+        // Validate the mnemonic
+        if (!validateMnemonic(newMnemonic)) {
+            showValidationMessage('Invalid mnemonic. Please enter a valid 12-word recovery phrase.');
+            return false;
+        }
+
+        // Store the new mnemonic
+        await storeMnemonic(newMnemonic.trim());
+        
+        // Update the wallet with the new mnemonic
+        if (wallet) {
+            wallet.mnemonic = newMnemonic.trim();
+        }
+        
+        // Reload the wallet with the new mnemonic
+        webViewLog('Reloading wallet with new mnemonic...');
+        await loadWalletFromMnemonic(wallet.mnemonic);
+        
+        // Ensure main screen is visible and wallet is displayed
+        showMainScreen();
+        
+        // Update the display
+        updateMnemonicDisplay();
+        
+        // Show success message
+        showValidationMessage('Mnemonic updated successfully! Wallet reloaded.', false);
+
+        // Disable the save button
+        const saveMnemonicEditBtn = document.getElementById('save-mnemonic-edit') as HTMLButtonElement;
+        if (saveMnemonicEditBtn) {
+            saveMnemonicEditBtn.disabled = true;
+        }
+        
+        // Hide modal after a short delay
+        setTimeout(() => {
+            hideMnemonicEditModal();
+            hideValidationMessage();
+            // Re-enable the save button
+            if (saveMnemonicEditBtn) {
+                saveMnemonicEditBtn.disabled = false;
+            }
+        }, 2000);
+        
+        return true;
+    } catch (error) {
+        webViewError('Error saving mnemonic:', error);
+        showValidationMessage('Failed to save mnemonic. Please try again.');
+        return false;
+    }
+}
+
+// ============================================================================
+// WALLET MANAGEMENT FUNCTIONS
+// ============================================================================
+
+// Load existing wallet from stored mnemonic
+async function loadWalletFromMnemonic(mnemonic: string) {
+    // Create wallet using ecash-wallet library
+    ecashWallet = Wallet.fromMnemonic(mnemonic, chronik);
+    
+    const address = getAddress(ecashWallet);
+    if (!address) {
+        // This should never happen
+        webViewError('Cannot get address from wallet');
+        return;
+    }
+    
+    await syncWallet();
+
+    // Create wallet data object - balance in satoshis
+    wallet = {
+        mnemonic: mnemonic,
+    };
+
+    // Update displays
+    updateWalletDisplay();
+    updateTransitionalBalance();
+    generateQRCode(address);
+
+    subscribeToAddress(address);
+}
+
+// Load the wallet. Use the mnemonic from storage if it exists, otherwise create
+// a new wallet.
+async function loadWallet(forceReload: boolean = false) {
+    // Prevent duplicate wallet creation unless force reload is requested
+    if (ecashWallet && !forceReload) {
+        return;
+    }
+    
+    // If force reloading, reset the existing wallet
+    if (forceReload && ecashWallet) {
+        ecashWallet = null;
+    }
+    
+    webViewLog('Loading the wallet...');
+    
+    let mnemonic: string | null = null;
+    try {
+        // Load existing mnemonic from storage
+        mnemonic = await loadMnemonic();
+    } catch (error) {
+        // We failed to load the mnemonic, most likely because the user did not
+        // complete the authentication. Close the app.
+        webViewLog('Failed to load existing wallet:', error);
+        sendMessageToBackend('CLOSE_APP', undefined);
+        return;
+    }
+
+    // Loading the mnemonic succeeded, but the mnemonic is null. This means that
+    // the user does not have a wallet yet. Create a new wallet.
+    if (!mnemonic) {
+        try {
+            webViewLog('Starting wallet creation (first run)...');
+            
+            // Generate and store a new mnemonic for first run
+            mnemonic = generateMnemonic();
+            storeMnemonic(mnemonic);
+        } catch (error) {
+            webViewError('Failed to create mnemonic:', error);
+            return;
+        }
+    }
+
+    await loadWalletFromMnemonic(mnemonic);
+}
+
+// Update wallet display (address and balance)
+function updateWalletDisplay() {
+    if (!wallet) {
+        webViewError('No wallet data, cannnot update the display');
+        return;
+    }
+    
+    const address = getAddress(ecashWallet);
+    if (!address) {
+        webViewError('No address, cannot update the display');
+        return;
+    }
+    
+    const addressEl = document.getElementById('address') as HTMLElement;
+    if (addressEl) {
+        addressEl.textContent = address;
+    } else {
+        webViewError('addressEl not found, cannot update address display');
+    }
+    
+    // Update balance display, no animation
+    updateAvailableBalanceDisplay(false);
+}
+
+// ============================================================================
+// BALANCE AND TRANSACTION MANAGEMENT FUNCTIONS
+// ============================================================================
+
+// Add pending transaction amount
+async function addPendingAmount(txid: string, state: 'pending_finalization' | 'finalized') {
+    if (pendingAmounts[txid]) {
+        webViewLog(`Transaction ${txid} already exists in pending amounts, ignoring duplicate`);
+        return false;
+    }
+
+    const txAmountSats = await calculateTransactionAmountSats(ecashWallet, chronik, txid);
+    if (txAmountSats == 0) {
+        webViewLog(`Transaction ${txid} has no amount, ignoring`);
+        return false;
+    }
+
+    pendingAmounts[txid] = { 
+        amountSats: txAmountSats, 
+        state,
+    };
+    webViewLog(`Added pending transaction ${txid}: ${satsToXec(txAmountSats)} XEC (${txAmountSats} sats, state: ${state})`);
+
+    return pendingAmounts[txid];
+}
+
+function finalizeTransaction(amountSats: number) {
+    availableBalanceSats += amountSats;
+    
+    updateTransitionalBalance();
+    updateAvailableBalanceDisplay(true); // Animate when finalizing transactions
+    triggerShakeAnimation();
+    
+    // Trigger haptic feedback for transaction finalization
+    sendMessageToBackend('TX_FINALIZED', undefined);
+}
+
+async function finalizePreConsensus(txid: string) {
+    let tx;
+    if (pendingAmounts[txid]) {
+        // We already have the transaction in our pending amounts, so we can
+        // just update the state
+        tx = pendingAmounts[txid];
+        tx.state = 'finalized';
+    } else {
+        const pending_tx = await addPendingAmount(txid, 'finalized');
+        if (!pending_tx) {
+            return;
+        }
+        tx = pending_tx;
+    }
+
+    finalizeTransaction(tx.amountSats);
+    webViewLog(`Pre-consensus finalized transaction ${txid}: ${satsToXec(tx.amountSats)} XEC moved to available balance, state set to finalized`);
+}
+
+async function finalizePostConsensus(txid: string) {
+    if (!pendingAmounts[txid]) {
+        // We're lost, just resync
+        webViewLog(`Post-consensus finalized transaction ${txid} but it's not pending, resyncing`);
+        await syncWallet();
+        return;
+    }
+
+    const tx = pendingAmounts[txid];
+
+    if (tx.state === 'pending_finalization') {
+        finalizeTransaction(tx.amountSats);
+        webViewLog(`Post-consensus finalized transaction ${txid} which is pending finalization, moving to available balance`);
+    }
+
+    // We won't get any message for this transaction anymore
+    delete pendingAmounts[txid];
+}
+
+// Update transitional balance display
+function updateTransitionalBalance() {
+    // Calculate total pending amounts
+    transitionalBalanceSats = 0;
+    
+    for (const tx of Object.values(pendingAmounts).filter(tx => tx.state === 'pending_finalization')) {
+        // Amount sign determines type: positive = receive, negative = send, 0 = receive
+        transitionalBalanceSats += tx.amountSats;
+    }
+    
+    webViewLog('Updated transitional balance:', satsToXec(transitionalBalanceSats), 'XEC (', transitionalBalanceSats, 'sats)');
+    
+    // Update transitional balance display
+    const transitionalBalanceEl = document.getElementById('transitional-balance') as HTMLElement;
+    if (transitionalBalanceEl) {
+        if (transitionalBalanceSats !== 0) {
+            const sign = transitionalBalanceSats > 0 ? '+' : '';
+            const type = transitionalBalanceSats > 0 ? 'receive' : 'spend';
+            const displayText = `${sign}${satsToXec(transitionalBalanceSats).toFixed(2)} XEC`;
+            transitionalBalanceEl.textContent = displayText;
+            transitionalBalanceEl.className = `transitional-balance ${type}`;
+            transitionalBalanceEl.classList.remove('hidden');
+        } else {
+            transitionalBalanceEl.classList.add('hidden');
+        }
+    } else {
+        webViewError('transitionalBalanceEl not found, cannot update transitional balance display');
+    }
+}
+
+// Update available balance display with optional animation
+function updateAvailableBalanceDisplay(animate: boolean = true) {
+    const balanceEl = document.getElementById('balance') as HTMLElement;
+    if (balanceEl) {
+        const balanceXec = satsToXec(availableBalanceSats);
+        if (animate) {
+            animateBalanceChange(balanceEl, balanceXec);
+        } else {
+            balanceEl.textContent = `${balanceXec.toFixed(2)} XEC`;
+        }
+        webViewLog('Available balance updated:', balanceXec, 'XEC (', availableBalanceSats, 'sats)');
+    } else {
+        webViewError('balanceEl not found, cannot update available balance display');
+    }
+}
+
+// Animate balance change with counting effect
+function animateBalanceChange(balanceEl: HTMLElement, targetBalance: number) {
+    const startBalance = parseFloat(balanceEl.textContent?.replace(' XEC', '') || '0');
+    const difference = targetBalance - startBalance;
+    const duration = 1000; // 1 second animation
+    const startTime = Date.now();
+    
+    // Add highlight effect for balance changes
+    if (Math.abs(difference) > 0.01) { // Only highlight if there's a meaningful change
+        balanceEl.style.transition = 'all 0.3s ease';
+        balanceEl.style.transform = 'scale(1.05)';
+        balanceEl.style.color = difference > 0 ? '#4ade80' : '#f87171'; // Green for increase, red for decrease
+        
+        setTimeout(() => {
+            balanceEl.style.transform = 'scale(1)';
+            balanceEl.style.color = '';
+        }, 300);
+    }
+    
+    function updateBalance() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Use easing function for smooth animation
+        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+        const currentBalance = startBalance + (difference * easeOutCubic);
+        
+        balanceEl.textContent = `${currentBalance.toFixed(2)} XEC`;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateBalance);
+        } else {
+            // Reset color after animation completes
+            setTimeout(() => {
+                balanceEl.style.color = '';
+            }, 200);
+        }
+    }
+    
+    requestAnimationFrame(updateBalance);
+}
+
+// Trigger shake animation
+function triggerShakeAnimation() {
+    const transitionalBalanceEl = document.getElementById('transitional-balance') as HTMLElement;
+    if (transitionalBalanceEl) {
+        transitionalBalanceEl.classList.add('shake');
+        setTimeout(() => {
+            transitionalBalanceEl.classList.remove('shake');
+        }, 500);
+    } else {
+        webViewError('transitionalBalanceEl not found, cannot trigger shake animation');
+    }
+}
+
+// Helper function to check if main screen is visible
+function isMainScreenVisible(): boolean {
+    const sendScreen = document.getElementById('send-screen');
+    const settingsScreen = document.getElementById('settings-screen');
+    
+    // Main screen is visible if both send and settings screens are hidden
+    return (!sendScreen || sendScreen.classList.contains('hidden')) && 
+           (!settingsScreen || settingsScreen.classList.contains('hidden'));
+}
+
+// ============================================================================
+// PULL-TO-REFRESH FUNCTIONS
+// ============================================================================
+
+// Pull-to-refresh functions using PullToRefresh.js library
+function initPullToRefresh() {
+    PullToRefresh.init({
+        mainElement: '.container',
+        onRefresh: async () => {
+            try {
+                await syncWallet();
+            } catch (error) {
+                webViewError('Failed pull-to-refresh sync:', error);
+                throw error;
+            }
+        },
+        shouldPullToRefresh: () => {
+            // Only allow pull-to-refresh on the main screen
+            return isMainScreenVisible();
+        }
+    });
+}
+
+// ============================================================================
+// QR SCANNER FUNCTIONS
+// ============================================================================
+
+function handleScanButtonClick() {
+    stopQRScanner();
+    startQRScanner(handleQRScanResult);
+}
+
+function handleCloseCamera() {
+    stopQRScanner(true); // Force close the modal
+    hideNoCameraFallback();
+}
+
+async function handleQRScanResult(result: string) {
+    // Validate if the scanned data is a valid eCash address
+    if (isValidECashAddress(result)) {
+        webViewLog('QR Code scanned:', result);
+        stopQRScanner();
+        await openSendScreenWithAddress(result);
+    }
+}
+
+// ============================================================================
+// SYNC AND SUBSCRIPTION FUNCTIONS
+// ============================================================================
+
+// Subscribe to address notifications via Chronik WebSocket.
+// This is where the main wallet update logic happens.
+async function subscribeToAddress(address: string) {
+    try {
+        // Close existing connection if any
+        unsubscribeFromAddress();
+        
+        // Create WebSocket connection using chronik-client
+        wsEndpoint = chronik.ws({
+            onConnect: () => {
+                webViewLog('Chronik WebSocket connected');
+            },
+            onReconnect: (e) => {
+                webViewLog('Chronik WebSocket reconnecting:', e);
+            },
+            onMessage: async (msg) => {
+                if (!('msgType' in msg) || !('txid' in msg)) {
+                    webViewError('No msgType, skipping websocket message:', msg);
+                    return;
+                }
+                if (!('txid' in msg)) {
+                    webViewError('No txid, skipping websocket message:', msg);
+                    return;
+                }
+
+                const txid = msg.txid;
+                
+                try {
+                    switch (msg.msgType) {
+                        case 'TX_ADDED_TO_MEMPOOL':
+                            // The transaction is not finalized yet, show it
+                            // in the transitional balance
+                            const tx = await addPendingAmount(txid, 'pending_finalization');
+                            if (!tx) {
+                                webViewError(`Failed to add pending mempool transaction: ${txid}`);
+                                break;
+                            }
+                            updateTransitionalBalance();
+                            triggerShakeAnimation();
+                            webViewLog(`Added pending transaction: ${satsToXec(tx.amountSats)} XEC for tx ${txid}`);
+                            break;
+                        case 'TX_CONFIRMED':
+                            if (pendingAmounts[txid]) {
+                                // This is the most common scenario
+                                webViewLog(`Confirmed transaction ${txid} is already pending with state ${pendingAmounts[txid].state}, skipping`);
+                            } else {
+                                // If the pending transaction doesn't exist, we
+                                // need to figure out if it's been finalized by
+                                // pre-consensus or not.
+                                // If it's final we have no way to know whether
+                                // it's already been accounted for or not (e.g.
+                                // we just opened the wallet).
+                                // In this case we do nothing and wait for the
+                                // block to eventually finalize to resync the
+                                // wallet.
+                                const chronik_tx = await chronik.tx(txid);
+                                if (!chronik_tx.isFinal) {
+                                    const tx = await addPendingAmount(txid, 'pending_finalization');
+                                    if (!tx) {
+                                        webViewError(`Failed to add pending confirmed transaction: ${txid}`);
+                                        break;
+                                    }
+                                    updateTransitionalBalance();
+                                    triggerShakeAnimation();
+                                    webViewLog(`Added pending confirmed transaction: ${satsToXec(tx.amountSats)} XEC for tx ${txid}`);
+                                }
+                            }
+                            break;
+                        case 'TX_FINALIZED':
+                            switch (msg.finalizationReasonType) {
+                                case 'TX_FINALIZATION_REASON_PRE_CONSENSUS':
+                                    finalizePreConsensus(txid);
+                                    break;
+                                case 'TX_FINALIZATION_REASON_POST_CONSENSUS':
+                                    finalizePostConsensus(txid);
+                                    break;
+                                default:
+                                    webViewError(`Unknown finalization reason for ${txid}: `, msg.finalizationReasonType);
+                                    break;
+                            }
+                            break;
+
+                        case 'TX_REMOVED_FROM_MEMPOOL':
+                        case 'TX_INVALIDATED':
+                            delete pendingAmounts[txid];
+                            updateTransitionalBalance();
+                            triggerShakeAnimation();
+                            webViewLog(`Removed pending transaction: ${txid}, reason: ${msg.msgType}`);
+                            break;
+                        default:
+                            webViewError(`Unknown message type: ${msg.msgType}`);
+                            break;
+                    }
+                } catch (error) {
+                    webViewError('Failed processing WebSocket message:', error);
+                }
+            }
+        });
+        
+        // Wait for WebSocket to be connected
+        await wsEndpoint.waitForOpen();
+        
+        wsEndpoint.subscribeToAddress(address);
+        webViewLog('Subscribed to address notifications for:', address);
+    } catch (error) {
+        webViewError('Failed to subscribe to address notifications:', error);
+    }
+}
+
+// Unsubscribe from address notifications
+function unsubscribeFromAddress() {
+    // Actually unsubscribe from all
+    if (wsEndpoint) {
+        wsEndpoint.close();
+        wsEndpoint = null;
+        webViewLog('Unsubscribed from address notifications');
+    }
+}
+
+// Sync wallet (with finalization for manual sync)
+async function syncWallet() {
+    webViewLog('Syncing wallet...');
+    
+    try {
+        // Add timeout to prevent hanging
+        const syncPromise = ecashWallet.sync();
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Network timeout - please check your internet connection')), 30000)
+        );
+        
+        await Promise.race([syncPromise, timeoutPromise]);
+
+        const spendableUtxos = ecashWallet.spendableSatsOnlyUtxos();
+        const finalUtxos = spendableUtxos.filter(utxo => utxo.isFinal);
+        
+        availableBalanceSats = Number(finalUtxos.reduce((sum, utxo) => sum + utxo.sats, 0n));
+        
+        // Clear all pending transactions. They will be re-added as needed if we
+        // get a message for them.
+        pendingAmounts = {};
+        transitionalBalanceSats = 0;
+        
+        // Update the display
+        updateAvailableBalanceDisplay(false);
+    } catch (error) {
+        webViewError('Failed to sync wallet:', error);
+
+        // Show user-friendly error message
+        if (error.message.includes('timeout') || error.message.includes('Network')) {
+            webViewError('No internet connection - please check your network and try again');
+            showErrorModal('Network Error', 'No internet connection - please check your network and try again');
+        } else if (error.message.includes('fetch') || error.message.includes('network')) {
+            webViewError('Network error - unable to connect to eCash network');
+            showErrorModal('Connection Error', 'Network error - unable to connect to eCash network');
+        } else {
+            webViewError('Failed to sync wallet - please try again');
+            showErrorModal('Sync Error', 'Failed to sync wallet - please try again');
+        }
+    }
+}
+
+// ============================================================================
+// INITIALIZATION FUNCTIONS
+// ============================================================================
+
+// Initialize the app when DOM is ready
+async function initializeApp() {
+    webViewLog('Initializing app...');
+    
+    // Set the back arrow icons
+    for (const iconEl of document.querySelectorAll('.back-arrow-icon')) {
+        (iconEl as HTMLImageElement).src = backArrowIcon;
+    }
+
+    // Set the eCash logo source
+    const logoEl = document.getElementById('ecash-logo') as HTMLImageElement;
+    if (logoEl) {
+        logoEl.src = ecashLogo;
+    }
+    // Set the edit icon source
+    const editIconEl = document.getElementById('edit-icon') as HTMLImageElement;
+    if (editIconEl) {
+        editIconEl.src = editIcon;
+    }
+    
+    // Set the history icon source
+    const historyIconEl = document.getElementById('history-icon') as HTMLImageElement;
+    if (historyIconEl) {
+        historyIconEl.src = historyIcon;
+    }
+
+    // Set the no camera icon source
+    const noCameraIconEl = document.getElementById('no-camera-icon') as HTMLImageElement;
+    if (noCameraIconEl) {
+        noCameraIconEl.src = noCameraIcon;
+    }
+
+    // Set the QR code icon source
+    const qrIconEl = document.getElementById('qr-icon') as HTMLImageElement;
+    if (qrIconEl) {
+        qrIconEl.src = qrCodeIcon;
+    }    
+    
+    // Set the settings icon source
+    const settingsIconEl = document.getElementById('settings-icon') as HTMLImageElement;
+    if (settingsIconEl) {
+        settingsIconEl.src = settingsIcon;
+    }
+
+    // Initialize pull-to-refresh
+    initPullToRefresh();
+    
+    // Always require authentication on app launch (for security)
+    // Show loading screen with an opaque background for better privacy: we want
+    // to avoid anybody seeing the content of the wallet before the
+    // authentication is complete.
+    showLoadingScreen('Authentication required');
+
+    // TODO use a configuration file
+    chronik = new ChronikClient(['https://chronik-testnet2.fabien.cash']);
+    
+    try {
+        await loadWallet();
+    } catch (error) {
+        webViewError('Failed to load the wallet:', error);
+        sendMessageToBackend('CLOSE_APP', undefined);
+        return;
+    }
+
+    transactionHistory = new TransactionHistoryManager(ecashWallet, chronik);
+    
+    // Hide loading screen on success
+    hideLoadingScreen();
+    
+    // Add click listener to address element for copying
+    const addressEl = document.getElementById('address') as HTMLElement;
+    if (addressEl) {
+        addressEl.addEventListener('click', () => copyAddress(ecashWallet));
+    } else {
+        webViewLog('Error: addressEl not found, cannot add click listener for copying address');
+    }
+    
+    // Add click listeners for QR scanner
+    const scanBtn = document.getElementById('scan-btn');
+    const closeCameraBtn = document.getElementById('close-camera');
+    
+    if (scanBtn) {
+        scanBtn.addEventListener('click', handleScanButtonClick);
+    }
+    
+    if (closeCameraBtn) {
+        closeCameraBtn.addEventListener('click', handleCloseCamera);
+    }
+    
+    // Add click listener for manual entry button
+    const manualEntryBtn = document.getElementById('manual-entry-btn');
+    if (manualEntryBtn) {
+        manualEntryBtn.addEventListener('click', async () => { await openSendScreenForManualEntry(); });
+    }
+    
+    // Add click listeners for Send screen
+    const backBtn = document.getElementById('back-btn');
+    const cancelSendBtn = document.getElementById('cancel-send');
+    const confirmSendBtn = document.getElementById('confirm-send');
+    
+    if (backBtn) {
+        backBtn.addEventListener('click', showMainScreen);
+    }
+    
+    if (cancelSendBtn) {
+        cancelSendBtn.addEventListener('click', showMainScreen);
+    }
+    
+    if (confirmSendBtn) {
+        confirmSendBtn.addEventListener('click', async () => {
+            await validateAndSend();
+        });
+    }
+    
+    // Add click listeners for History screen
+    const historyBackBtn = document.getElementById('history-back-btn');
+    if (historyBackBtn) {
+        historyBackBtn.addEventListener('click', showMainScreen);
+    }
+
+    // Add click listeners for Settings screen
+    const settingsBackBtn = document.getElementById('settings-back-btn');
+    const editMnemonicBtn = document.getElementById('edit-mnemonic-btn');
+    const cancelMnemonicEditBtn = document.getElementById('cancel-mnemonic-edit');
+    const saveMnemonicEditBtn = document.getElementById('save-mnemonic-edit');
+    const closeMnemonicModalBtn = document.getElementById('close-mnemonic-modal');
+    
+    if (settingsBackBtn) {
+        settingsBackBtn.addEventListener('click', showMainScreen);
+    }
+    
+    if (editMnemonicBtn) {
+        editMnemonicBtn.addEventListener('click', showMnemonicEditModal);
+    }
+    
+    if (cancelMnemonicEditBtn) {
+        cancelMnemonicEditBtn.addEventListener('click', () => {
+            hideMnemonicEditModal();
+            hideValidationMessage();
+        });
+    }
+    
+    if (closeMnemonicModalBtn) {
+        closeMnemonicModalBtn.addEventListener('click', () => {
+            hideMnemonicEditModal();
+            hideValidationMessage();
+        });
+    }
+    
+    if (saveMnemonicEditBtn) {
+        saveMnemonicEditBtn.addEventListener('click', async () => {
+            const editText = document.getElementById('mnemonic-edit-text') as HTMLTextAreaElement;
+            if (editText) {
+                await saveMnemonic(editText.value);
+            }
+        });
+    }
+    
+    // Add validation to amount input
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    if (sendAmountInput) {
+        sendAmountInput.addEventListener('input', (event) => {
+            handleAmountInput(event);
+            updateFeeDisplay();
+        });
+        sendAmountInput.addEventListener('blur', validateAmountField);
+    }
+    
+    // Add slider functionality
+    const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
+    if (amountSlider) {
+        amountSlider.addEventListener('input', (event) => {
+            handleSliderInput(event);
+            updateFeeDisplay();
+        });
+    }
+    
+    // Add recipient address input listener for fee updates and validation
+    const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
+    if (recipientAddressInput) {
+        recipientAddressInput.addEventListener('input', () => {
+            validateAddressField();
+            updateFeeDisplay();
+        });
+    }
+    
+    // Ensure camera modal starts hidden
+    const cameraModal = document.getElementById('camera-modal');
+    if (cameraModal) {
+        cameraModal.classList.add('hidden');
+        webViewLog('Camera modal initialized as hidden');
+    }
+}
+
+// Add click listener to address element
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already ready
+    initializeApp();
+}
+
+// Cleanup WebSocket connection when page is unloaded
+window.addEventListener('beforeunload', () => {
+    unsubscribeFromAddress();
+});
