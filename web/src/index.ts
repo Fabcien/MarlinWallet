@@ -694,6 +694,8 @@ async function loadWalletFromMnemonic(mnemonic: string) {
     generateQRCode(address);
 
     subscribeToAddress(address);
+
+    transactionHistory = new TransactionHistoryManager(ecashWallet, chronik);
 }
 
 // Load the wallet. Use the mnemonic from storage if it exists, otherwise create
@@ -1230,8 +1232,6 @@ async function initializeApp() {
         return;
     }
 
-    transactionHistory = new TransactionHistoryManager(ecashWallet, chronik);
-    
     // Hide loading screen on success
     hideLoadingScreen();
     

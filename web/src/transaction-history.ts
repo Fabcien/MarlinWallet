@@ -195,7 +195,9 @@ export class TransactionHistoryManager {
     // Show no transactions message
     showNoTransactions(): void {
         const transactionList = document.getElementById('transaction-list');
-        if (!transactionList) return;
+        if (!transactionList) {
+            return;
+        }
 
         transactionList.innerHTML = `
             <div class="no-transactions">
@@ -208,7 +210,9 @@ export class TransactionHistoryManager {
     // Show transaction error
     showTransactionError(): void {
         const transactionList = document.getElementById('transaction-list');
-        if (!transactionList) return;
+        if (!transactionList) {
+            return;
+        }
 
         transactionList.innerHTML = `
             <div class="no-transactions">
