@@ -49,6 +49,9 @@ react {
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
+
+    /* Disable bundling for all variants since we're using pre-built web assets */
+    debuggableVariants = []
 }
 
 /**
@@ -118,5 +121,6 @@ dependencies {
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
 
 project.ext.react = [
-    enableHermes: true  // Set to false to disable Hermes
+    enableHermes: true,  // Set to false to disable Hermes
+    entryFile: null
 ]
