@@ -38,7 +38,7 @@ interface PendingTransaction {
 }
 
 // Get DOM elements
-const mainScreen = document.getElementById('wallet-card') as HTMLElement;
+const mainScreen = document.getElementById('main-screen') as HTMLElement;
 const sendScreen = document.getElementById('send-screen') as HTMLElement;
 const settingsScreen = document.getElementById('settings-screen') as HTMLElement;
 const historyScreen = document.getElementById('history-screen') as HTMLElement;
@@ -330,7 +330,7 @@ function updateFeeDisplay() {
     // Check for dust threshold
     const dustXEC = satsToXec(Number(DEFAULT_DUST_SATS));
     if (amount < dustXEC) {
-        errorMessage = `Amount is too small, minimum is ${dustXEC} XEC`;
+        errorMessage = `Amount is too small`;
     }
     
     // Try to estimate fee for the requested amount
@@ -340,7 +340,7 @@ function updateFeeDisplay() {
     if (!feeEstimate) {
         amount = calculateMaxSpendableAmount(ecashWallet);
         feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount);
-        errorMessage = `Insufficient balance - Max ${amount.toFixed(2)} XEC`;
+        errorMessage = `Insufficient balance`;
     }
 
     // Build the html fee block heading depending on the error condition

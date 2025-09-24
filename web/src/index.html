@@ -23,13 +23,14 @@
         </div>
     </div>
 
-    <!-- Header -->
-    <div class="container">
+    <!-- Main Screen -->
+    <div id="main-screen" class="screen">
+        <!-- Header -->
         <div class="header">
-            <div class="logo">
-                <img id="ecash-logo" alt="eCash" style="width: 35px; height: 35px; object-fit: contain;">
+            <div class="title">
+                <img id="ecash-logo" alt="eCash Wallet">
+                <h1 >eCash Wallet</h1>
             </div>
-            <div class="subtitle">eCash Wallet</div>
             <div class="header-buttons">
                 <div class="history-btn">
                     <button class="history-button" onclick="openHistory()">
@@ -43,159 +44,149 @@
                 </div>
             </div>
         </div>
+        
+        <div class="container">
+            <!-- Main Wallet Card -->
+            <div id="wallet-card" class="card">
+                <!-- Balance -->
+                <div class="balance-container">
+                    <div class="card-label">Available Balance</div>
+                    <div class="balance" id="balance">0 XEC</div>
+                    <div class="transitional-balance hidden" id="transitional-balance"></div>
+                </div>
 
+                <!-- Address Section -->
+                <div class="address-section">
+                    <div class="card-label">Your Receiving Address</div>
+                    <div class="address" id="address">Generating wallet...</div>
+                    
+                    <!-- QR Code -->
+                    <div class="qr-code" id="qr-code">
+                        <!-- QR code will be generated here -->
+                    </div>
+                </div>
 
-        <!-- Main Wallet Card -->
-        <div id="wallet-card" class="card">
-            <!-- Balance -->
-            <div class="balance-container">
-                <div class="balance-label">Available Balance</div>
-                <div class="balance" id="balance">0 XEC</div>
-                <div class="transitional-balance hidden" id="transitional-balance"></div>
             </div>
 
-            <!-- Address Section -->
-            <div class="address-section">
-                <div class="address-label">Your Receiving Address</div>
-                <div class="address" id="address">Generating wallet...</div>
-                
-                <!-- QR Code -->
-                <div class="qr-code" id="qr-code">
-                    <!-- QR code will be generated here -->
+            <!-- Scan Button -->
+            <div class="scan-section">
+                <button class="scan-btn" id="scan-btn" title="Scan QR Code">
+                    <img id="qr-icon" alt="Scan QR Code">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Screen -->
+    <div id="send-screen" class="screen hidden">
+        <div class="screen-header">
+            <button class="back-btn" id="back-btn">
+            <img alt="Back" class="back-arrow-icon">
+            </button>
+            <h2>Send eCash</h2>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="form-group">
+                    <label for="recipient-address">Recipient Address</label>
+                    <input type="text" id="recipient-address" placeholder="Enter eCash address" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="send-amount">Amount (XEC)</label>
+                    <input type="number" id="send-amount" placeholder="0.00" step="0.01" min="0">
+                        <div class="slider-wrapper">
+                            <input type="range" id="amount-slider" min="5.46" max="100" step="0.01" value="5.46">
+                        </div>
+                        <div class="slider-labels">
+                            <span class="slider-min">5.46 XEC</span>
+                            <span class="slider-max" id="slider-max-label">100 XEC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fee-display" class="card" style="display: none;"></div>
+
+                <div class="send-actions">
+                    <button class="btn btn-secondary" id="cancel-send">Cancel</button>
+                    <button class="btn btn-primary" id="confirm-send">Send</button>
                 </div>
             </div>
+        </div>
+        </div>
+    </div>
 
-         </div>
+    <!-- History Screen -->
+    <div id="history-screen" class="screen hidden">
+        <div class="screen-header">
+            <button class="back-btn" id="history-back-btn">
+                <img alt="Back" class="back-arrow-icon">
+            </button>
+            <h2>Transaction History</h2>
+        </div>
+        
+        <div class="container">
+            <div class="card">
+                <div class="transaction-list" id="transaction-list">
+                    <div class="loading-transactions">
+                        <div class="loading-spinner"></div>
+                        <p>Loading transactions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-         <!-- Scan Button -->
-         <div class="scan-section">
-             <button class="scan-btn" id="scan-btn" title="Scan QR Code">
-                 <img id="qr-icon" alt="Scan QR Code">
-             </button>
-         </div>
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen hidden">
+        <div class="screen-header">
+            <button class="back-btn" id="settings-back-btn">
+                <img alt="Back" class="back-arrow-icon">
+            </button>
+            <h2>Settings</h2>
+        </div>
+        
+        <div class="container">
+            <div class="card">
+                <div class="setting-item">
+                <div class="setting-info">
+                    <h3>Wallet Mnemonic</h3>
+                    <p>Your 12-word recovery phrase. Make sure to back it up securely!</p>
+                </div>
+                <button class="btn btn-primary" id="edit-mnemonic-btn">Edit</button>
+            </div>
+            <div class="mnemonic-display" id="mnemonic-display">
+                    <textarea id="mnemonic-text" readonly></textarea>
+            </div>
+            </div>
+        </div>
+    </div>
 
-         <!-- Send Screen -->
-         <div id="send-screen" class="send-screen hidden">
-             <div class="send-header">
-                 <button class="back-btn" id="back-btn">
-                    <img alt="Back" class="back-arrow-icon">
-                 </button>
-                 <h2>Send eCash</h2>
-             </div>
+    <!-- Mnemonic Edit Modal -->
+    <div class="modal-overlay hidden" id="mnemonic-edit-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Mnemonic</h3>
+                <button class="close-btn" id="close-mnemonic-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Enter your 12-word recovery phrase.</p>
+                <p class="modal-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <strong>This will replace your current wallet.</strong>
+                </p>
+                <textarea id="mnemonic-edit-text" placeholder="Enter 12 words separated by spaces"></textarea>
+                <div class="validation-message" id="mnemonic-validation" style="display: none;"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-mnemonic-edit">Cancel</button>
+                <button class="btn btn-primary" id="save-mnemonic-edit">Save</button>
+            </div>
+        </div>
+    </div>
 
-             <div class="send-card">
-                 <div class="form-group">
-                     <label for="recipient-address">Recipient Address</label>
-                     <input type="text" id="recipient-address" placeholder="Enter eCash address" readonly>
-                 </div>
-
-                 <div class="form-group">
-                     <label for="send-amount">Amount (XEC)</label>
-                     <input type="number" id="send-amount" placeholder="0.00" step="0.01" min="0">
-                     <div class="amount-slider-container">
-                         <div class="slider-wrapper">
-                             <input type="range" id="amount-slider" min="5.46" max="100" step="0.01" value="5.46">
-                             <div class="slider-marks">
-                                 <div class="mark" style="left: 10%"></div>
-                                 <div class="mark" style="left: 20%"></div>
-                                 <div class="mark" style="left: 30%"></div>
-                                 <div class="mark" style="left: 40%"></div>
-                                 <div class="mark" style="left: 50%"></div>
-                                 <div class="mark" style="left: 60%"></div>
-                                 <div class="mark" style="left: 70%"></div>
-                                 <div class="mark" style="left: 80%"></div>
-                                 <div class="mark" style="left: 90%"></div>
-                             </div>
-                         </div>
-                         <div class="slider-labels">
-                             <span class="slider-min">5.46 XEC</span>
-                             <span class="slider-max" id="slider-max-label">100 XEC</span>
-                         </div>
-                     </div>
-                 </div>
-
-                 <div id="fee-display" class="fee-display" style="display: none;"></div>
-
-                 <div class="send-actions">
-                     <button class="btn btn-secondary" id="cancel-send">Cancel</button>
-                     <button class="btn btn-primary" id="confirm-send">Send</button>
-                 </div>
-             </div>
-         </div>
-     </div>
-
-      <!-- History Screen -->
-      <div id="history-screen" class="history-screen hidden">
-          <div class="history-header">
-              <button class="back-btn" id="history-back-btn">
-                  <img alt="Back" class="back-arrow-icon">
-              </button>
-              <h2>Transaction History</h2>
-          </div>
-          
-          <div class="history-content">
-              <div class="history-section">
-                  <div class="transaction-list" id="transaction-list">
-                      <div class="loading-transactions">
-                          <div class="loading-spinner"></div>
-                          <p>Loading transactions...</p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-
-      <!-- Settings Screen -->
-      <div id="settings-screen" class="settings-screen hidden">
-          <div class="settings-header">
-              <button class="back-btn" id="settings-back-btn">
-                  <img alt="Back" class="back-arrow-icon">
-              </button>
-              <h2>Settings</h2>
-          </div>
-          
-         <div class="settings-content">
-             <div class="settings-section">
-                 <div class="setting-item">
-                     <div class="setting-info">
-                         <h3>Wallet Mnemonic</h3>
-                         <p>Your 12-word recovery phrase. Make sure to back it up securely!</p>
-                     </div>
-                     <div class="setting-control">
-                         <button class="btn btn-primary" id="edit-mnemonic-btn">Edit</button>
-                     </div>
-                 </div>
-                 <div class="mnemonic-display" id="mnemonic-display">
-                     <textarea id="mnemonic-text" readonly></textarea>
-                 </div>
-             </div>
-         </div>
-      </div>
-
-     <!-- Mnemonic Edit Modal -->
-     <div class="modal-overlay hidden" id="mnemonic-edit-modal" style="display: none;">
-         <div class="modal-content">
-             <div class="modal-header">
-                 <h3>Edit Mnemonic</h3>
-                 <button class="close-btn" id="close-mnemonic-modal">×</button>
-             </div>
-             <div class="modal-body">
-                 <p class="modal-description">Enter your 12-word recovery phrase.</p>
-                 <p class="modal-warning">
-                     <span class="warning-icon">⚠️</span>
-                     <strong>This will replace your current wallet.</strong>
-                 </p>
-                 <textarea id="mnemonic-edit-text" placeholder="Enter 12 words separated by spaces"></textarea>
-                 <div class="validation-message" id="mnemonic-validation" style="display: none;"></div>
-             </div>
-             <div class="modal-actions">
-                 <button class="btn btn-secondary" id="cancel-mnemonic-edit">Cancel</button>
-                 <button class="btn btn-primary" id="save-mnemonic-edit">Save</button>
-             </div>
-         </div>
-     </div>
-
-     <!-- Camera Modal -->
+    <!-- Camera Modal -->
     <div class="camera-modal hidden" id="camera-modal">
         <div class="camera-container">
             <div class="camera-header">
