@@ -34,6 +34,10 @@ local.properties
 *.keystore
 !debug.keystore
 
+# IOS
+ios/web/
+ios/eCashWalletApp/web/
+
 # node.js
 #
 node_modules/

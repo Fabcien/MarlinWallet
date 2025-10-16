@@ -14,6 +14,7 @@ import {
   Dimensions,
   BackHandler,
   NativeModules,
+  Platform,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -27,6 +28,25 @@ interface WebViewMessage {
 
 function App(): React.JSX.Element {
   const webViewRef = useRef<WebView>(null);
+  const [webViewSource, setWebViewSource] = useState<any>(null);
+
+  // Get the bundle path on mount for iOS
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      const BundlePath = NativeModules.BundlePath;
+      
+      if (BundlePath && BundlePath.mainBundlePath) {
+        const bundlePath = BundlePath.mainBundlePath;
+        const uri = `file://${bundlePath}/web/index.html`;
+        setWebViewSource({
+          uri: uri,
+          baseUrl: `file://${bundlePath}/web/`,
+        });
+      }
+    } else {
+      setWebViewSource({uri: 'file:///android_asset/web/index.html'});
+    }
+  }, []);
 
   // Properly terminate the app if the user cancels the authentication. Without
   // this, the app will stay running in the background and can be resumed in an
@@ -166,21 +186,22 @@ function App(): React.JSX.Element {
     }
   };
 
-  // Get the local HTML file path
-  const getLocalHtmlPath = () => {
-    // For development, we'll use a local file
-    // In production, you might want to serve this from a web server
-    return 'file:///android_asset/web/index.html';
-  };
+  // Don't render WebView until we have the source
+  if (!webViewSource) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#667eea" />
-      
+    <SafeAreaView style={styles.container}>      
       <View style={styles.webViewContainer}>
         <WebView
           ref={webViewRef}
-          source={{uri: getLocalHtmlPath()}}
+          source={webViewSource}
           style={styles.webView}
           onMessage={handleWebViewMessage}
           javaScriptEnabled={true}
@@ -188,6 +209,13 @@ function App(): React.JSX.Element {
           startInLoadingState={true}
           scalesPageToFit={true}
           mixedContentMode="compatibility"
+          originWhitelist={['*']}
+          allowFileAccess={true}
+          allowFileAccessFromFileURLs={true}
+          allowUniversalAccessFromFileURLs={true}
+          mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback={true}
+          mediaCapturePermissionGrantType="grant"
           onError={(syntheticEvent) => {
             const {nativeEvent} = syntheticEvent;
             console.error('WebView error:', nativeEvent);
@@ -207,7 +235,6 @@ const {width, height} = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#667eea',
   },
   webViewContainer: {
     flex: 1,
@@ -217,6 +244,15 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     height: height,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 18,
   },
 });
 

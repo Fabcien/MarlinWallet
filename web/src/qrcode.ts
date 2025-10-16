@@ -45,11 +45,33 @@ export async function startQRScanner(scanResultHandler: (result: string) => void
 export function stopQRScanner(forceClose = false) {
     const modal = document.getElementById('camera-modal') as HTMLElement;
     const fallback = document.getElementById('no-camera-fallback');
+    const video = document.getElementById('camera-video') as HTMLVideoElement;
     
     if (qrScanner) {
         qrScanner.stop();
         qrScanner.destroy();
         qrScanner = null;
+    }
+    
+    // Properly clean up the video element to prevent media player overlay
+    if (video) {
+        // Stop all video tracks
+        if (video.srcObject) {
+            const stream = video.srcObject as MediaStream;
+            if (stream && stream.getTracks) {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            }
+        }
+        
+        // Clear the video source
+        video.srcObject = null;
+        video.src = '';
+        video.load(); // Reset the video element
+        
+        // Pause the video
+        video.pause();
     }
     
     // Close modal if forceClose is true OR if fallback is not visible

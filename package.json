@@ -3,10 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
     "lint": "eslint .",
-    "start": "react-native start"
+    "start": "react-native start",
+    "build-web": "pushd web && npm run build && popd",
+    "copy-web-ios": "cp -r web/dist/* ios/eCashWalletApp/web/",
+    "copy-web-android": "mkdir -p android/app/src/main/assets/web/ && cp -r web/dist/* android/app/src/main/assets/web/",
+    "ios": "npm run build-web && npm run copy-web-ios && react-native run-ios",
+    "android": "npm run build-web && npm run copy-web-android && react-native run-android"
   },
   "dependencies": {
     "react": "18.2.0",

@@ -61,6 +61,7 @@ export function loadMnemonic(): Promise<string | null> {
                     const message = JSON.parse(event.data);
                     if (message.type === 'MNEMONIC_RESPONSE') {
                         document.removeEventListener('message', handleResponse);
+                        window.removeEventListener('message', handleResponse);
                         resolve(message.data);
                     }
                 } catch (error) {
@@ -69,12 +70,14 @@ export function loadMnemonic(): Promise<string | null> {
             };
             
             document.addEventListener('message', handleResponse);
+            window.addEventListener('message', handleResponse);
             
             sendMessageToBackend('LOAD_MNEMONIC', undefined);
             
             // Timeout after 30 seconds
             setTimeout(() => {
                 document.removeEventListener('message', handleResponse);
+                window.removeEventListener('message', handleResponse);
                 reject(new Error('Timeout loading mnemonic'));
             }, 30000);
         } else {
