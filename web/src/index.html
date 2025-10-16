@@ -196,9 +196,7 @@
             <div class="camera-content">
                 <video id="camera-video" autoplay playsinline></video>
                 <canvas id="qr-canvas" class="hidden"></canvas>
-                <div class="scan-overlay">
-                    <div class="scan-frame"></div>
-                </div>
+                <div class="scan-overlay"></div>
                 <!-- No camera fallback -->
                 <div id="no-camera-fallback" class="no-camera-fallback hidden">
                     <img id="no-camera-icon" alt="Camera">
@@ -208,7 +206,6 @@
                 </div>
             </div>
             <div class="camera-footer">
-                <p>Position the QR code within the frame</p>
                 <button class="btn btn-secondary manual-entry-btn" id="manual-entry-btn">
                     <img id="edit-icon" alt="Edit">
                     Manual Entry

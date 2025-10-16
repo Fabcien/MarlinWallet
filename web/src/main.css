@@ -394,35 +394,11 @@ body {
     padding: 15px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     word-break: break-all;
-    
-    /* user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none; */
-    /* Disable touch highlighting on mobile */
-    /* -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-drag: none;
-    -khtml-user-select: none; */
-    /* Disable any active/focus states */
-    /* outline: none; */
 }
 
 .transaction-item:last-child {
     border-bottom: none;
 }
-
-/* Remove hover effect for better web experience - handled by removing hover styles */
-
-/* Disable all active/focus states to prevent mobile touch effects */
-/* .transaction-item:active,
-.transaction-item:focus,
-.transaction-item:focus-visible {
-background: none !important;
-outline: none !important;
-transform: none !important;
-box-shadow: none !important; */
-/* } */
 
 .transaction-info {
     flex: 1;
@@ -795,20 +771,6 @@ box-shadow: none !important; */
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.scan-frame {
-    width: 200px;
-    height: 200px;
-    border: 2px solid #4CAF50;
-    border-radius: 10px;
-    position: relative;
-    animation: scanPulse 2s infinite;
-}
-
-@keyframes scanPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
 }
 
 .camera-footer {
