@@ -13,6 +13,7 @@ import {getAddress, WalletData, sendTransaction} from './wallet';
 import {getMnemonic, storeMnemonic, loadMnemonic, generateMnemonic, validateMnemonic} from './mnemonic';
 import {copyAddress, isValidECashAddress} from './address';
 import {generateQRCode, hideNoCameraFallback, stopQRScanner, startQRScanner} from './qrcode';
+import {config} from './config';
 
 // Styles
 import './main.css';
@@ -1221,8 +1222,7 @@ async function initializeApp() {
     // authentication is complete.
     showLoadingScreen('Authentication required');
 
-    // TODO use a configuration file
-    chronik = new ChronikClient(['https://chronik-testnet2.fabien.cash']);
+    chronik = new ChronikClient(config.chronikUrls);
     
     try {
         await loadWallet();

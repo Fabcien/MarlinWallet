@@ -1,6 +1,7 @@
 import {Wallet} from 'ecash-wallet';
 import {Address} from 'ecash-lib';
 import {webViewLog, webViewError} from './common';
+import {config} from './config';
 
 
 // Wallet date that we can't retrieve from ecash-wallet.
@@ -15,9 +16,7 @@ export function getAddress(wallet: Wallet): string | null {
         return null;
     }
 
-    // TODO update to support mainnet. Unfortunately, ecash-wallet stores the
-    // wallet address as a string and not as an Address object.
-    return Address.parse(wallet.address).withPrefix('ectest').toString();
+    return Address.parse(wallet.address).withPrefix(config.addressPrefix).toString();
 }
 
 // Send a transaction
