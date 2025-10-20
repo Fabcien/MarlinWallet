@@ -20,4 +20,9 @@ export const config = {
      * Transaction IDs will be appended to this URL
      */
     explorerUrl: 'https://texplorer.e.cash/tx/',
+
+    /**
+     * Currency ticker symbol
+     */
+    ticker: 'tXEC',
 };

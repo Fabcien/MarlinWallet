@@ -3,6 +3,7 @@ import {calculateTransactionAmountSats, satsToXec} from './amount';
 import {Wallet} from 'ecash-wallet';
 import { ChronikClient } from 'chronik-client';
 import {getAddress} from './wallet';
+import {config} from './config';
 
 // ============================================================================
 // TRANSACTION HISTORY MANAGER
@@ -172,7 +173,7 @@ export class TransactionHistoryManager {
                         <div class="transaction-txid" data-txid="${String(txid)}">${String(shortTxid)}</div>
                     </div>
                     <div class="transaction-amount ${String(amountClass)}">
-                        ${String(amountPrefix)}${String(amountValue)} XEC
+                        ${String(amountPrefix)}${String(amountValue)} ${config.ticker}
                     </div>
                 </div>
             `;

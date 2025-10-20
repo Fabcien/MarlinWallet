@@ -325,7 +325,7 @@ function updateSendScreenLimits() {
     // Update slider max label
     const sliderMaxLabel = document.getElementById('slider-max-label');
     if (sliderMaxLabel) {
-        sliderMaxLabel.textContent = `${maxSpendable.toFixed(2)} XEC`;
+        sliderMaxLabel.textContent = `${maxSpendable.toFixed(2)} ${config.ticker}`;
     }
 }
 
@@ -385,15 +385,15 @@ function updateFeeDisplay() {
             </div>
             <div class="fee-item">
                 <span class="fee-label">Amount:</span>
-                <span class="fee-value">${amount.toFixed(2)} XEC</span>
+                <span class="fee-value">${amount.toFixed(2)} ${config.ticker}</span>
             </div>
             <div class="fee-item">
                 <span class="fee-label">Network Fee:</span>
-                <span class="fee-value">${feeEstimate?.feeXEC.toFixed(2)} XEC</span>
+                <span class="fee-value">${feeEstimate?.feeXEC.toFixed(2)} ${config.ticker}</span>
             </div>
             <div class="fee-item total">
                 <span class="fee-label">Total:</span>
-                <span class="fee-value">${feeEstimate?.totalXEC.toFixed(2)} XEC</span>
+                <span class="fee-value">${feeEstimate?.totalXEC.toFixed(2)} ${config.ticker}</span>
             </div>
         </div>
     `;
@@ -472,7 +472,7 @@ function updateSliderFromInput() {
         amountSlider.max = maxAmount.toString();
         const sliderMaxLabel = document.getElementById('slider-max-label');
         if (sliderMaxLabel) {
-            sliderMaxLabel.textContent = `${maxAmount.toFixed(2)} XEC`;
+            sliderMaxLabel.textContent = `${maxAmount.toFixed(2)} ${config.ticker}`;
         }
         
         // Update slider marks for new range
@@ -494,7 +494,7 @@ function updateSliderMarks(minAmount: number, maxAmount: number) {
         mark.setAttribute('data-value', displayValue);
         
         // Add a subtle tooltip effect on hover
-        (mark as HTMLElement).title = `${displayValue} XEC`;
+        (mark as HTMLElement).title = `${displayValue} ${config.ticker}`;
     });
 }
 
@@ -524,14 +524,14 @@ function validateAmountField() {
     if (amount < minAmount) {
         sendAmountInput.classList.add('invalid');
         confirmSendBtn.disabled = true;
-        confirmSendBtn.textContent = `Min: ${minAmount} XEC`;
+        confirmSendBtn.textContent = `Min: ${minAmount} ${config.ticker}`;
         return;
     }
     
     if (amount > maxAmount) {
         sendAmountInput.classList.add('invalid');
         confirmSendBtn.disabled = true;
-        confirmSendBtn.textContent = `Max: ${maxAmount.toFixed(2)} XEC`;
+        confirmSendBtn.textContent = `Max: ${maxAmount.toFixed(2)} ${config.ticker}`;
         return;
     }
     
@@ -568,7 +568,7 @@ async function validateAndSend() {
         // Convert XEC to satoshis (1 XEC = 100 satoshis)
         const sats = Math.round(amount * 100);
         await sendTransaction(ecashWallet, address, sats);
-        webViewLog(`Sent ${amount} XEC to ${address}`);
+        webViewLog(`Sent ${amount} ${config.ticker} to ${address}`);
     } catch (error) {
         webViewError('Failed to send transaction:', error);
     } finally {
@@ -811,7 +811,7 @@ async function addPendingAmount(txid: string, state: 'pending_finalization' | 'f
         amountSats: txAmountSats, 
         state,
     };
-    webViewLog(`Added pending transaction ${txid}: ${satsToXec(txAmountSats)} XEC (${txAmountSats} sats, state: ${state})`);
+    webViewLog(`Added pending transaction ${txid}: ${satsToXec(txAmountSats)} ${config.ticker} (${txAmountSats} sats, state: ${state})`);
 
     return pendingAmounts[txid];
 }
@@ -843,7 +843,7 @@ async function finalizePreConsensus(txid: string) {
     }
 
     finalizeTransaction(tx.amountSats);
-    webViewLog(`Pre-consensus finalized transaction ${txid}: ${satsToXec(tx.amountSats)} XEC moved to available balance, state set to finalized`);
+    webViewLog(`Pre-consensus finalized transaction ${txid}: ${satsToXec(tx.amountSats)} ${config.ticker} moved to available balance, state set to finalized`);
 }
 
 async function finalizePostConsensus(txid: string) {
@@ -875,7 +875,7 @@ function updateTransitionalBalance() {
         transitionalBalanceSats += tx.amountSats;
     }
     
-    webViewLog('Updated transitional balance:', satsToXec(transitionalBalanceSats), 'XEC (', transitionalBalanceSats, 'sats)');
+    webViewLog('Updated transitional balance:', satsToXec(transitionalBalanceSats), config.ticker, '(', transitionalBalanceSats, 'sats)');
     
     // Update transitional balance display
     const transitionalBalanceEl = document.getElementById('transitional-balance') as HTMLElement;
@@ -883,7 +883,7 @@ function updateTransitionalBalance() {
         if (transitionalBalanceSats !== 0) {
             const sign = transitionalBalanceSats > 0 ? '+' : '';
             const type = transitionalBalanceSats > 0 ? 'receive' : 'spend';
-            const displayText = `${sign}${satsToXec(transitionalBalanceSats).toFixed(2)} XEC`;
+            const displayText = `${sign}${satsToXec(transitionalBalanceSats).toFixed(2)} ${config.ticker}`;
             transitionalBalanceEl.textContent = displayText;
             transitionalBalanceEl.className = `transitional-balance ${type}`;
             transitionalBalanceEl.classList.remove('hidden');
@@ -903,9 +903,9 @@ function updateAvailableBalanceDisplay(animate: boolean = true) {
         if (animate) {
             animateBalanceChange(balanceEl, balanceXec);
         } else {
-            balanceEl.textContent = `${balanceXec.toFixed(2)} XEC`;
+            balanceEl.textContent = `${balanceXec.toFixed(2)} ${config.ticker}`;
         }
-        webViewLog('Available balance updated:', balanceXec, 'XEC (', availableBalanceSats, 'sats)');
+        webViewLog('Available balance updated:', balanceXec, config.ticker, '(', availableBalanceSats, 'sats)');
     } else {
         webViewError('balanceEl not found, cannot update available balance display');
     }
@@ -913,7 +913,7 @@ function updateAvailableBalanceDisplay(animate: boolean = true) {
 
 // Animate balance change with counting effect
 function animateBalanceChange(balanceEl: HTMLElement, targetBalance: number) {
-    const startBalance = parseFloat(balanceEl.textContent?.replace(' XEC', '') || '0');
+    const startBalance = parseFloat(balanceEl.textContent?.replace(` ${config.ticker}`, '') || '0');
     const difference = targetBalance - startBalance;
     const duration = 1000; // 1 second animation
     const startTime = Date.now();
@@ -938,7 +938,7 @@ function animateBalanceChange(balanceEl: HTMLElement, targetBalance: number) {
         const easeOutCubic = 1 - Math.pow(1 - progress, 3);
         const currentBalance = startBalance + (difference * easeOutCubic);
         
-        balanceEl.textContent = `${currentBalance.toFixed(2)} XEC`;
+        balanceEl.textContent = `${currentBalance.toFixed(2)} ${config.ticker}`;
         
         if (progress < 1) {
             requestAnimationFrame(updateBalance);
@@ -1065,7 +1065,7 @@ async function subscribeToAddress(address: string) {
                             }
                             updateTransitionalBalance();
                             triggerShakeAnimation();
-                            webViewLog(`Added pending transaction: ${satsToXec(tx.amountSats)} XEC for tx ${txid}`);
+                            webViewLog(`Added pending transaction: ${satsToXec(tx.amountSats)} ${config.ticker} for tx ${txid}`);
                             break;
                         case 'TX_CONFIRMED':
                             if (pendingAmounts[txid]) {
@@ -1090,7 +1090,7 @@ async function subscribeToAddress(address: string) {
                                     }
                                     updateTransitionalBalance();
                                     triggerShakeAnimation();
-                                    webViewLog(`Added pending confirmed transaction: ${satsToXec(tx.amountSats)} XEC for tx ${txid}`);
+                                    webViewLog(`Added pending confirmed transaction: ${satsToXec(tx.amountSats)} ${config.ticker} for tx ${txid}`);
                                 }
                             }
                             break;
@@ -1194,6 +1194,20 @@ async function syncWallet() {
 // Initialize the app when DOM is ready
 async function initializeApp() {
     webViewLog('Initializing app...');
+    
+    // Initialize ticker symbols in HTML
+    const tickerElements = [
+        'ticker-balance',
+        'ticker-label',
+        'ticker-slider-min',
+        'ticker-slider-max'
+    ];
+    for (const elementId of tickerElements) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.textContent = config.ticker;
+        }
+    }
     
     // Set the back arrow icons
     for (const iconEl of document.querySelectorAll('.back-arrow-icon')) {
