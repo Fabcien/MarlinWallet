@@ -204,6 +204,17 @@ async function openSendScreenForManualEntry() {
     // The address field is already cleared and editable
 }
 
+// Open transaction in block explorer
+function openTransactionInExplorer(txid: string) {
+    const explorerUrl = config.explorerUrl + txid;
+    
+    // On mobile (iOS/Android WebView), send message to native layer to open in system browser
+    // On web, use window.open
+    if (!sendMessageToBackend('OPEN_URL', explorerUrl)) {
+        window.open(explorerUrl, '_blank');
+    }
+}
+
 // History screen functions
 function showHistoryScreen() {
     if (mainScreen) {
@@ -225,11 +236,22 @@ function showHistoryScreen() {
         transactionHistory.loadTransactionHistory(chronik, address, true);
     }
     
-    // Setup scroll detection for infinite loading
+    // Setup scroll detection for infinite loading and click handlers for transaction IDs
     setTimeout(() => {
         const transactionList = document.getElementById('transaction-list');
         if (transactionList) {
             transactionList.addEventListener('scroll', () => transactionHistory.handleScroll());
+            
+            // Event delegation for transaction ID clicks
+            transactionList.addEventListener('click', (e: Event) => {
+                const target = e.target as HTMLElement;
+                if (target.classList.contains('transaction-txid')) {
+                    const txid = target.getAttribute('data-txid');
+                    if (txid) {
+                        openTransactionInExplorer(txid);
+                    }
+                }
+            });
         }
     }, 100); // Small delay to ensure DOM is ready
 }

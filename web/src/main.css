@@ -411,6 +411,16 @@ body {
 
 .transaction-txid {
     font-family: 'Courier New', monospace;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+}
+
+.transaction-txid:hover {
+    opacity: 1;
+    text-decoration-style: solid;
 }
 
 .transaction-amount {

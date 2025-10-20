@@ -15,6 +15,7 @@ import {
   BackHandler,
   NativeModules,
   Platform,
+  Linking,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -175,6 +176,14 @@ function App(): React.JSX.Element {
           }).catch((error) => {
             console.log('Error in loadMnemonic:', error);
           });
+          break;
+
+        case 'OPEN_URL':
+          if (message.data) {
+            Linking.openURL(message.data).catch((err) => {
+              console.error('Failed to open URL:', err);
+            });
+          }
           break;
 
         default:

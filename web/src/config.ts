@@ -14,4 +14,10 @@ export const config = {
      * 'ecash' for mainnet, 'ectest' for testnet
      */
     addressPrefix: 'ectest' as const,
+
+    /**
+     * Block explorer base URL
+     * Transaction IDs will be appended to this URL
+     */
+    explorerUrl: 'https://texplorer.e.cash/tx/',
 };

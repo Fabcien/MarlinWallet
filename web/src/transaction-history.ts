@@ -169,7 +169,7 @@ export class TransactionHistoryManager {
                 <div class="transaction-item">
                     <div class="transaction-info">
                         <div class="transaction-time">${String(time)}</div>
-                        <div class="transaction-txid">${String(shortTxid)}</div>
+                        <div class="transaction-txid" data-txid="${String(txid)}">${String(shortTxid)}</div>
                     </div>
                     <div class="transaction-amount ${String(amountClass)}">
                         ${String(amountPrefix)}${String(amountValue)} XEC
