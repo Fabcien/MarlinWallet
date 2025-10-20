@@ -724,8 +724,13 @@ body {
 }
 
 .camera-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px;
     border-radius: 20px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .camera-header {
@@ -762,8 +767,10 @@ body {
 .camera-content {
     position: relative;
     width: 100%;
-    height: 300px;
+    aspect-ratio: 4 / 3;
     background: black;
+    min-height: 300px;
+    max-height: 500px;
 }
 
 #camera-video {
