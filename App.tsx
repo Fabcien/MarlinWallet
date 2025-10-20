@@ -19,6 +19,7 @@ import {
 import {WebView} from 'react-native-webview';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import * as Keychain from 'react-native-keychain';
+import LinearGradient from 'react-native-linear-gradient';
 
 // Interface for messages to and from the WebView
 interface WebViewMessage {
@@ -189,45 +190,59 @@ function App(): React.JSX.Element {
   // Don't render WebView until we have the source
   if (!webViewSource) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-        </View>
-      </SafeAreaView>
+      <View style={styles.loadingScreen}>
+        {Platform.OS === 'ios' && (
+          <StatusBar barStyle="light-content" translucent={false} backgroundColor="#000000" />
+        )}
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>      
-      <View style={styles.webViewContainer}>
-        <WebView
-          ref={webViewRef}
-          source={webViewSource}
-          style={styles.webView}
-          onMessage={handleWebViewMessage}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
-          scalesPageToFit={true}
-          mixedContentMode="compatibility"
-          originWhitelist={['*']}
-          allowFileAccess={true}
-          allowFileAccessFromFileURLs={true}
-          allowUniversalAccessFromFileURLs={true}
-          mediaPlaybackRequiresUserAction={false}
-          allowsInlineMediaPlayback={true}
-          mediaCapturePermissionGrantType="grant"
-          onError={(syntheticEvent) => {
-            const {nativeEvent} = syntheticEvent;
-            console.error('WebView error:', nativeEvent);
-            Alert.alert('WebView Error', 'Failed to load the wallet interface');
-          }}
-          onHttpError={(syntheticEvent) => {
-            const {nativeEvent} = syntheticEvent;
-            console.error('WebView HTTP error:', nativeEvent);
-          }}
-        />
-      </View>
-    </SafeAreaView>
+    <LinearGradient
+      colors={['#667eea', '#764ba2']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
+      style={styles.container}>
+      {Platform.OS === 'ios' && (
+        <StatusBar barStyle="light-content" translucent={true} />
+      )}
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.webViewContainer}>
+          <WebView
+            ref={webViewRef}
+            source={webViewSource}
+            style={styles.webView}
+            onMessage={handleWebViewMessage}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            scalesPageToFit={true}
+            mixedContentMode="compatibility"
+            originWhitelist={['*']}
+            allowFileAccess={true}
+            allowFileAccessFromFileURLs={true}
+            allowUniversalAccessFromFileURLs={true}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            mediaCapturePermissionGrantType="grant"
+            onError={(syntheticEvent) => {
+              const {nativeEvent} = syntheticEvent;
+              console.error('WebView error:', nativeEvent);
+              Alert.alert('WebView Error', 'Failed to load the wallet interface');
+            }}
+            onHttpError={(syntheticEvent) => {
+              const {nativeEvent} = syntheticEvent;
+              console.error('WebView HTTP error:', nativeEvent);
+            }}
+          />
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -236,14 +251,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  safeArea: {
+    flex: 1,
+  },
+  loadingScreen: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
   webViewContainer: {
     flex: 1,
-    backgroundColor: '#667eea',
+    backgroundColor: 'transparent',
   },
   webView: {
     flex: 1,
     width: width,
     height: height,
+    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,
