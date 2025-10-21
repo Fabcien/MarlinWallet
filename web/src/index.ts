@@ -62,6 +62,48 @@ let pendingAmounts: { [txid: string]: PendingTransaction } = {};
 // Create global instance of TransactionHistoryManager
 let transactionHistory: TransactionHistoryManager | null = null;
 
+// Settings state
+let requireHoldToSend = true;
+
+// ============================================================================
+// SETTINGS PERSISTENCE
+// ============================================================================
+
+// Only used for settings that don't require any security or encryption
+const SETTINGS_STORAGE_KEY = 'ecashwallet.settings.1';
+
+interface AppSettings {
+    requireHoldToSend: boolean;
+}
+
+// Load settings from localStorage
+function loadSettings(): AppSettings {
+    try {
+        const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (stored) {
+            const settings = JSON.parse(stored) as AppSettings;
+            return settings;
+        }
+    } catch (error) {
+        webViewError('Failed to load settings from localStorage:', error);
+    }
+    
+    // Return defaults if no settings found
+    return {
+        requireHoldToSend: true,
+    };
+}
+
+// Save settings to localStorage
+function saveSettings(settings: AppSettings): void {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        webViewLog('Settings saved to localStorage');
+    } catch (error) {
+        webViewError('Failed to save settings to localStorage:', error);
+    }
+}
+
 // ============================================================================
 // GENERAL UTILITY FUNCTIONS
 // ============================================================================
@@ -164,6 +206,17 @@ async function showSendScreen() {
     // Hide fee display
     if (feeDisplay) {
         feeDisplay.style.display = 'none';
+    }
+    
+    // Re-setup send button behavior based on current setting
+    const confirmSendBtn = document.getElementById('confirm-send') as HTMLButtonElement;
+    if (confirmSendBtn) {
+        // Remove all existing event listeners by cloning and replacing
+        const newButton = confirmSendBtn.cloneNode(true) as HTMLButtonElement;
+        confirmSendBtn.parentNode?.replaceChild(newButton, confirmSendBtn);
+        
+        // Setup with current behavior
+        setupHoldToSend(newButton);
     }
     
     // Update send screen limits based on current wallet state
@@ -286,7 +339,9 @@ function showSettingsScreen() {
 // Validate address field and update UI
 function validateAddressField() {
     const recipientInput = document.getElementById('recipient-address') as HTMLInputElement;
-    if (!recipientInput) return;
+    if (!recipientInput) {
+        return;
+    }
     
     const address = recipientInput.value.trim();
     
@@ -455,7 +510,9 @@ function updateSliderFromInput() {
     const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
     const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
     
-    if (!sendAmountInput || !amountSlider) return;
+    if (!sendAmountInput || !amountSlider) {
+        return;
+    }
     
     const value = parseFloat(sendAmountInput.value);
     const minAmount = 5.46;
@@ -503,7 +560,9 @@ function validateAmountField() {
     const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
     const confirmSendBtn = document.getElementById('confirm-send') as HTMLButtonElement;
     
-    if (!sendAmountInput || !confirmSendBtn) return;
+    if (!sendAmountInput || !confirmSendBtn) {
+        return;
+    }
     
     const amount = parseFloat(sendAmountInput.value);
     const minAmount = 5.46;
@@ -517,35 +576,180 @@ function validateAmountField() {
     if (isNaN(amount) || amount <= 0) {
         sendAmountInput.classList.add('invalid');
         confirmSendBtn.disabled = true;
-        confirmSendBtn.textContent = 'Enter Amount';
+        const btnSpan = confirmSendBtn.querySelector('span');
+        if (btnSpan) {
+            btnSpan.textContent = 'Enter Amount';
+        }
         return;
     }
     
     if (amount < minAmount) {
         sendAmountInput.classList.add('invalid');
         confirmSendBtn.disabled = true;
-        confirmSendBtn.textContent = `Min: ${minAmount} ${config.ticker}`;
+        const btnSpan = confirmSendBtn.querySelector('span');
+        if (btnSpan) {
+            btnSpan.textContent = `Min: ${minAmount} ${config.ticker}`;
+        }
         return;
     }
     
     if (amount > maxAmount) {
         sendAmountInput.classList.add('invalid');
         confirmSendBtn.disabled = true;
-        confirmSendBtn.textContent = `Max: ${maxAmount.toFixed(2)} ${config.ticker}`;
+        const btnSpan = confirmSendBtn.querySelector('span');
+        if (btnSpan) {
+            btnSpan.textContent = `Max: ${maxAmount.toFixed(2)} ${config.ticker}`;
+        }
         return;
     }
     
     // Amount is valid
     sendAmountInput.classList.add('valid');
     confirmSendBtn.disabled = false;
-    confirmSendBtn.textContent = 'Send';
+    const btnSpan = confirmSendBtn.querySelector('span');
+    if (btnSpan) {
+        btnSpan.textContent = requireHoldToSend ? 'Hold to send' : 'Send';
+    }
+}
+
+// Send button setup - either hold-to-send or simple click based on settings
+function setupHoldToSend(button: HTMLButtonElement) {
+    // If hold-to-send is disabled, use simple click behavior
+    if (!requireHoldToSend) {
+        button.addEventListener('click', async () => {
+            await validateAndSend();
+        });
+        return;
+    }
+    
+    // Hold-to-send behavior with progressive haptic feedback
+    let holdTimer: number | null = null;
+    let hapticInterval: number | null = null;
+    let startTime = 0;
+    const HOLD_DURATION = 1000; // 1 second
+    const HAPTIC_INTERVAL = 50; // Haptic every 50ms for smoother continuous feel
+    
+    // Progressive haptic feedback based on elapsed time
+    const triggerProgressiveHaptic = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / HOLD_DURATION, 1);
+        
+        // Use selection haptic for smoother rapid feedback, transitioning to impacts
+        let hapticType: 'selection' | 'impactLight' | 'impactMedium' | 'impactHeavy' = 'selection';
+        
+        if (progress > 0.8) {
+            hapticType = 'impactHeavy';
+        } else if (progress > 0.5) {
+            hapticType = 'impactMedium';
+        } else if (progress > 0.2) {
+            hapticType = 'impactLight';
+        }
+        
+        sendMessageToBackend('HAPTIC_FEEDBACK', hapticType);
+    };
+    
+    const startHold = (e: Event) => {
+        e.preventDefault();
+        
+        // Check if button is disabled
+        if (button.disabled) {
+            return;
+        }
+        
+        // Validate before starting the hold animation
+        const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+        const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
+        
+        if (!sendAmountInput || !recipientAddressInput) {
+            return;
+        }
+        
+        const amount = parseFloat(sendAmountInput.value);
+        const address = recipientAddressInput.value.trim();
+        
+        // Validate address
+        if (!address || !isValidECashAddress(address)) {
+            // Play warning haptic immediately
+            sendMessageToBackend('HAPTIC_FEEDBACK', 'notificationWarning');
+            recipientAddressInput.focus();
+            return;
+        }
+        
+        // Validate amount
+        if (isNaN(amount) || amount <= 0) {
+            // Play warning haptic immediately
+            sendMessageToBackend('HAPTIC_FEEDBACK', 'notificationWarning');
+            return;
+        }
+        
+        startTime = Date.now();
+        button.classList.add('holding');
+        
+        // Trigger initial haptic
+        triggerProgressiveHaptic();
+        
+        // Set up continuous haptic feedback during hold
+        hapticInterval = window.setInterval(() => {
+            triggerProgressiveHaptic();
+        }, HAPTIC_INTERVAL);
+        
+        // Set timer for successful hold
+        holdTimer = window.setTimeout(async () => {
+            // Success haptic
+            sendMessageToBackend('HAPTIC_FEEDBACK', 'notificationSuccess');
+            await validateAndSend();
+            cleanup();
+        }, HOLD_DURATION);
+    };
+    
+    const cancelHold = () => {
+        if (holdTimer === null) {
+            return;
+        }
+        
+        cleanup();
+        
+        // Give feedback that hold was cancelled
+        const holdDuration = Date.now() - startTime;
+        if (holdDuration > 300) {
+            // User held for a bit but released early - give warning haptic
+            sendMessageToBackend('HAPTIC_FEEDBACK', 'notificationWarning');
+        }
+    };
+    
+    const cleanup = () => {
+        if (holdTimer !== null) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+        }
+        
+        // Clear haptic interval
+        if (hapticInterval !== null) {
+            clearInterval(hapticInterval);
+            hapticInterval = null;
+        }
+        
+        button.classList.remove('holding');
+    };
+    
+    // Mouse events
+    button.addEventListener('mousedown', startHold);
+    button.addEventListener('mouseup', cancelHold);
+    button.addEventListener('mouseleave', cancelHold);
+    
+    // Touch events for mobile
+    button.addEventListener('touchstart', startHold, { passive: false });
+    button.addEventListener('touchend', cancelHold);
+    button.addEventListener('touchcancel', cancelHold);
 }
 
 async function validateAndSend() {
     const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
     const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
     
-    if (!sendAmountInput || !recipientAddressInput) return;
+    if (!sendAmountInput || !recipientAddressInput) {
+        return;
+    }
     
     const amount = parseFloat(sendAmountInput.value);
     const address = recipientAddressInput.value.trim();
@@ -1195,6 +1399,10 @@ async function syncWallet() {
 async function initializeApp() {
     webViewLog('Initializing app...');
     
+    // Load saved settings
+    const settings = loadSettings();
+    requireHoldToSend = settings.requireHoldToSend;
+    
     // Initialize ticker symbols in HTML
     const tickerElements = [
         'ticker-balance',
@@ -1300,7 +1508,7 @@ async function initializeApp() {
     // Add click listeners for Send screen
     const backBtn = document.getElementById('back-btn');
     const cancelSendBtn = document.getElementById('cancel-send');
-    const confirmSendBtn = document.getElementById('confirm-send');
+    const confirmSendBtn = document.getElementById('confirm-send') as HTMLButtonElement;
     
     if (backBtn) {
         backBtn.addEventListener('click', showMainScreen);
@@ -1311,9 +1519,7 @@ async function initializeApp() {
     }
     
     if (confirmSendBtn) {
-        confirmSendBtn.addEventListener('click', async () => {
-            await validateAndSend();
-        });
+        setupHoldToSend(confirmSendBtn);
     }
     
     // Add click listeners for History screen
@@ -1331,6 +1537,24 @@ async function initializeApp() {
     
     if (settingsBackBtn) {
         settingsBackBtn.addEventListener('click', showMainScreen);
+    }
+    
+    // Setup hold-to-send toggle and apply saved setting
+    const holdToSendToggle = document.getElementById('hold-to-send-toggle') as HTMLInputElement;
+    if (holdToSendToggle) {
+        // Apply saved setting to toggle UI
+        holdToSendToggle.checked = requireHoldToSend;
+        
+        // Add change listener
+        holdToSendToggle.addEventListener('change', () => {
+            requireHoldToSend = holdToSendToggle.checked;
+            webViewLog(`Hold to send ${requireHoldToSend ? 'enabled' : 'disabled'}`);
+            
+            // Save settings to localStorage
+            saveSettings({
+                requireHoldToSend: requireHoldToSend,
+            });
+        });
     }
     
     if (editMnemonicBtn) {

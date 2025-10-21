@@ -72,10 +72,10 @@ function App(): React.JSX.Element {
     }
   };
 
-  // Trigger haptic feedback for transaction finalization
-  const triggerTransactionHaptic = () => {
+  // Trigger haptic feedback with variable intensity
+  const triggerHaptic = (type: any) => {
     try {
-      ReactNativeHapticFeedback.trigger('impactMedium', {
+      ReactNativeHapticFeedback.trigger(type as any, {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
@@ -158,7 +158,13 @@ function App(): React.JSX.Element {
 
         case 'TX_FINALIZED':
           console.log('Transaction finalized, triggering haptic feedback');
-          triggerTransactionHaptic();
+          triggerHaptic('impactMedium');
+          break;
+
+        case 'HAPTIC_FEEDBACK':
+          if (message.data) {
+            triggerHaptic(message.data);
+          }
           break;
 
         case 'STORE_MNEMONIC':

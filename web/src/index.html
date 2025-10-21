@@ -110,7 +110,7 @@
 
                 <div class="send-actions">
                     <button class="btn btn-secondary" id="cancel-send">Cancel</button>
-                    <button class="btn btn-primary" id="confirm-send">Send</button>
+                    <button class="btn btn-primary" id="confirm-send"><span>Send</span></button>
                 </div>
             </div>
         </div>
@@ -150,15 +150,25 @@
         <div class="container">
             <div class="card">
                 <div class="setting-item">
-                <div class="setting-info">
-                    <h3>Wallet Mnemonic</h3>
-                    <p>Your 12-word recovery phrase. Make sure to back it up securely!</p>
+                    <div class="setting-info">
+                        <h3>Require Hold to Send</h3>
+                        <p>When enabled, you must hold the send button for 1 second to confirm the transaction.</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="hold-to-send-toggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <button class="btn btn-primary" id="edit-mnemonic-btn">Edit</button>
-            </div>
-            <div class="mnemonic-display" id="mnemonic-display">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Wallet Mnemonic</h3>
+                        <p>Your 12-word recovery phrase. Make sure to back it up securely!</p>
+                    </div>
+                    <button class="btn btn-primary" id="edit-mnemonic-btn">Edit</button>
+                </div>
+                <div class="mnemonic-display" id="mnemonic-display">
                     <textarea id="mnemonic-text" readonly></textarea>
-            </div>
+                </div>
             </div>
         </div>
     </div>
