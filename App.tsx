@@ -16,6 +16,7 @@ import {
   NativeModules,
   Platform,
   Linking,
+  DeviceEventEmitter,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -33,6 +34,7 @@ function App(): React.JSX.Element {
   const [webViewSource, setWebViewSource] = useState<any>(null);
   const [nfcUri, setNfcUri] = useState<string | null>(null);
   const [isNfcSupported, setIsNfcSupported] = useState<boolean>(false);
+  const [pendingPaymentRequest, setPendingPaymentRequest] = useState<string | null>(null);
 
   // Get the bundle path on mount for iOS
   useEffect(() => {
@@ -117,6 +119,28 @@ function App(): React.JSX.Element {
       }
     };
   }, [isNfcSupported, nfcUri]);
+
+  // Background payment request listener
+  useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+
+    const handlePaymentRequest = (bip21Uri: string) => {
+      // Store the pending payment to send after wallet is loaded
+      setPendingPaymentRequest(bip21Uri);
+    };
+
+    // Listen for payment requests
+    const subscription = DeviceEventEmitter.addListener(
+      'PAYMENT_REQUEST',
+      handlePaymentRequest
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Properly terminate the app if the user cancels the authentication. Without
   // this, the app will stay running in the background and can be resumed in an
@@ -265,6 +289,19 @@ function App(): React.JSX.Element {
           if (message.data && Platform.OS === 'android') {
             console.log('Setting NFC URI:', message.data);
             setNfcUri(message.data);
+          }
+          break;
+
+        case 'WALLET_READY':
+          // Wallet has finished loading - send pending payment request if any
+          if (pendingPaymentRequest && webViewRef.current) {
+            webViewRef.current.postMessage(
+              JSON.stringify({
+                type: 'PAYMENT_REQUEST',
+                data: pendingPaymentRequest,
+              })
+            );
+            setPendingPaymentRequest(null);
           }
           break;
 

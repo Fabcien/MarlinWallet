@@ -935,8 +935,6 @@ function updateNfcAddress(amountSats?: number) {
     
     // Send the complete BIP21 URI to native app for NFC HCE
     sendMessageToBackend('SET_NFC_URI', bip21Uri);
-    
-    webViewLog(`NFC URI updated: ${bip21Uri}`);
 }
 
 // Load existing wallet from stored mnemonic
@@ -969,6 +967,9 @@ async function loadWalletFromMnemonic(mnemonic: string) {
     
     // Update NFC address for tag emulation
     updateNfcAddress();
+    
+    // Notify React Native that wallet is ready (for pending NFC payments)
+    sendMessageToBackend('WALLET_READY', true);
 }
 
 // Load the wallet. Use the mnemonic from storage if it exists, otherwise create
@@ -1675,6 +1676,31 @@ async function initializeApp() {
         webViewLog('Camera modal initialized as hidden');
     }
 }
+
+// Listen for payment requests from React Native
+function handlePaymentRequest(event: any) {
+    try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'PAYMENT_REQUEST') {
+            const bip21Uri = message.data;
+            
+            // Parse the BIP21 URI
+            const parsed = parseBip21Uri(bip21Uri);
+            if (parsed) {
+                // Open send screen with prefilled address and amount
+                openSendScreenWithAddress(parsed.address, parsed.sats);
+            } else {
+                webViewError('Invalid BIP21 URI:', bip21Uri);
+            }
+        }
+    } catch (error) {
+        // Ignore parse errors from non-JSON messages
+    }
+}
+
+document.addEventListener('message', handlePaymentRequest);
+window.addEventListener('message', handlePaymentRequest);
 
 // Add click listener to address element
 if (document.readyState === 'loading') {
