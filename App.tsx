@@ -121,7 +121,7 @@ function App(): React.JSX.Element {
     };
   }, [isNfcSupported, nfcUri]);
 
-  // Background payment request listener
+  // Background payment request listener (Android)
   useEffect(() => {
     if (Platform.OS !== 'android') {
       return;
@@ -153,6 +153,44 @@ function App(): React.JSX.Element {
     if (PaymentRequestModule && PaymentRequestModule.setListenerReady) {
       PaymentRequestModule.setListenerReady();
     }
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Deep link listener (iOS)
+  useEffect(() => {
+    if (Platform.OS !== 'ios') {
+      return;
+    }
+
+    const handleUrl = (event: {url: string}) => {
+      const uri = event.url;
+      
+      // If wallet is already ready, send immediately
+      if (walletReadyRef.current && webViewRef.current) {
+        webViewRef.current.postMessage(
+          JSON.stringify({
+            type: 'PAYMENT_REQUEST',
+            data: uri,
+          })
+        );
+      } else {
+        // Store as pending - will be sent when WALLET_READY is received
+        setPendingPaymentRequest(uri);
+      }
+    };
+
+    // Check for initial URL (app launched from closed state)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleUrl({url});
+      }
+    });
+
+    // Listen for URLs while app is running
+    const subscription = Linking.addEventListener('url', handleUrl);
 
     return () => {
       subscription.remove();
