@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">eCash Wallet</string>
+    <string name="nfc_service_description">eCash Wallet</string>
+    <string name="nfc_aid_group_description">eCash Wallet BIP21 URI</string>
 </resources>

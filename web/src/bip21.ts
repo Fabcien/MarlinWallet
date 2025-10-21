@@ -1,5 +1,6 @@
 import {config} from './config';
 import {isValidECashAddress} from './address';
+import {satsToXec} from './amount';
 
 /**
  * Result of parsing a BIP21 URI
@@ -7,6 +8,31 @@ import {isValidECashAddress} from './address';
 export interface Bip21ParseResult {
     address: string;
     sats?: number;
+}
+
+/**
+ * Create a BIP21 URI from an address and optional amount
+ * 
+ * @param address - The eCash address (may include network prefix like "ectest:" or "ecash:")
+ * @param amountSats - Optional amount in satoshis (will be converted to XEC in the URI)
+ * @returns A BIP21 URI string (e.g., "ecash:address" or "ecash:address?amount=100.00")
+ */
+export function createBip21Uri(address: string, amountSats?: number): string {
+    // Strip any existing prefix to get the raw address
+    const rawAddress = address.includes(':') ? address.split(':')[1] : address;
+    
+    // Build BIP21 URI with config prefix
+    let bip21Uri = config.bip21Prefix + rawAddress;
+    
+    // Add amount parameter if provided and positive
+    if (amountSats && amountSats > 0) {
+        // Convert satoshis to XEC using the standard conversion function
+        const amountXec = satsToXec(amountSats);
+        // Format with 2 decimal places
+        bip21Uri += `?amount=${amountXec.toFixed(2)}`;
+    }
+    
+    return bip21Uri;
 }
 
 /**
