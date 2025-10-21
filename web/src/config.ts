@@ -25,4 +25,9 @@ export const config = {
      * Currency ticker symbol
      */
     ticker: 'tXEC',
+
+    /**
+     * BIP21 prefix
+     */
+    bip21Prefix: 'ecash:' as const,
 };

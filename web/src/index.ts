@@ -14,6 +14,7 @@ import {getMnemonic, storeMnemonic, loadMnemonic, generateMnemonic, validateMnem
 import {copyAddress, isValidECashAddress} from './address';
 import {generateQRCode, hideNoCameraFallback, stopQRScanner, startQRScanner} from './qrcode';
 import {config} from './config';
+import {parseBip21Uri} from './bip21';
 
 // Styles
 import './main.css';
@@ -231,7 +232,7 @@ async function showSendScreen() {
     updateSliderMarks(5.46, maxSpendable);
 }
 
-async function openSendScreenWithAddress(address: string) {
+async function openSendScreenWithAddress(address: string, sats?: number) {
     // First show the send screen (this will reset everything)
     await showSendScreen();
     
@@ -242,9 +243,30 @@ async function openSendScreenWithAddress(address: string) {
         recipientAddressInput.setAttribute('readonly', 'readonly');
         // Validate the address after setting it
         validateAddressField();
-        // Trigger fee calculation since address is now valid and amount is pre-filled
-        updateFeeDisplay();
     }
+    
+    // If an amount was provided (in satoshis), convert to XEC and set it
+    if (sats !== undefined && sats > 0) {
+        const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+        const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
+        
+        // Convert satoshis to XEC for display
+        const amountXec = satsToXec(sats);
+        
+        if (sendAmountInput) {
+            // Format to 2 decimal places
+            sendAmountInput.value = amountXec.toFixed(2);
+            // Validate the amount
+            validateAmountField();
+        }
+        
+        if (amountSlider) {
+            amountSlider.value = amountXec.toString();
+        }
+    }
+    
+    // Trigger fee calculation since address is now valid
+    updateFeeDisplay();
 }
 
 async function openSendScreenForManualEntry() {
@@ -1218,9 +1240,19 @@ function handleCloseCamera() {
 }
 
 async function handleQRScanResult(result: string) {
-    // Validate if the scanned data is a valid eCash address
+    // First, try to parse as BIP21 URI
+    const bip21Result = parseBip21Uri(result);
+    
+    if (bip21Result) {
+        webViewLog('BIP21 URI scanned:', result);
+        stopQRScanner();
+        await openSendScreenWithAddress(bip21Result.address, bip21Result.sats);
+        return;
+    }
+    
+    // Fallback: validate if the scanned data is a plain valid eCash address
     if (isValidECashAddress(result)) {
-        webViewLog('QR Code scanned:', result);
+        webViewLog('eCash address scanned:', result);
         stopQRScanner();
         await openSendScreenWithAddress(result);
     }
