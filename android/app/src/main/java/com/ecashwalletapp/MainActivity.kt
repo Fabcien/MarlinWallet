@@ -33,6 +33,8 @@ class MainActivity : ReactActivity() {
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    // Reset listener state on app launch
+    PaymentRequestModule.reset()
     handleNfcIntent(intent)
   }
   
@@ -40,54 +42,89 @@ class MainActivity : ReactActivity() {
     super.onNewIntent(intent)
     
     // Ignore NFC intents when app is already running (foreground)
-    // Only process NFC when launching from background
-    if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
+    // But allow ACTION_VIEW (camera QR, web links) since those are intentional user actions
+    if (intent.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
       return
+    }
+    
+    // Handle ACTION_VIEW even in foreground
+    if (intent.action == Intent.ACTION_VIEW) {
+      val uri = intent.data?.toString()
+      if (uri != null) {
+        // App is already running, send payment request immediately
+        sendPaymentRequestImmediately(uri)
+      }
     }
   }
   
   /**
-   * Handle NFC NDEF intent when app is launched from background
+   * Handle payment request intents (NFC, deep links, etc.) when app is launched from background
    */
   private fun handleNfcIntent(intent: Intent?) {
     if (intent == null) {
       return
     }
     
-    if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-      
-      // Parse the NDEF message
-      val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-      if (rawMessages != null && rawMessages.isNotEmpty()) {
-        val ndefMessage = rawMessages[0] as NdefMessage
-        val records = ndefMessage.records
-        
-        if (records.isNotEmpty()) {
-          val record = records[0]
+    when (intent.action) {
+      // Handle NFC NDEF discovery
+      NfcAdapter.ACTION_NDEF_DISCOVERED -> {
+        val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+        if (rawMessages != null && rawMessages.isNotEmpty()) {
+          val ndefMessage = rawMessages[0] as NdefMessage
+          val records = ndefMessage.records
           
-          // Check if it's a URI record (TNF = 0x01, Type = "U")
-          if (record.tnf.toInt() == 0x01) {
-            val payload = record.payload
-            if (payload.isNotEmpty()) {
-              // First byte is the URI identifier code (0x00 for no prefix)
-              val uriBytes = payload.copyOfRange(1, payload.size)
-              val uri = String(uriBytes, Charsets.UTF_8)
-              
-              // Store for sending when React Native is ready
-              sendPaymentRequest(uri)
+          if (records.isNotEmpty()) {
+            val record = records[0]
+            
+            // Check if it's a URI record (TNF = 0x01, Type = "U")
+            if (record.tnf.toInt() == 0x01) {
+              val payload = record.payload
+              if (payload.isNotEmpty()) {
+                // First byte is the URI identifier code
+                val uriBytes = payload.copyOfRange(1, payload.size)
+                val uri = String(uriBytes, Charsets.UTF_8)
+                sendPaymentRequest(uri)
+              }
             }
           }
+        }
+      }
+      
+      // Handle deep links (camera QR scanner, web links, etc.)
+      Intent.ACTION_VIEW -> {
+        val uri = intent.data?.toString()
+        if (uri != null) {
+          // Send to React Native - validation happens in TypeScript using config.ts
+          sendPaymentRequest(uri)
         }
       }
     }
   }
   
   /**
-   * Store a payment request URI and schedule sending to React Native
+   * Store a payment request URI and schedule sending to React Native (for app launch)
    */
   private fun sendPaymentRequest(uri: String) {
     pendingPaymentUri = uri
     tryToSendPendingPaymentRequest()
+  }
+  
+  /**
+   * Send payment request immediately when app is already running
+   */
+  private fun sendPaymentRequestImmediately(uri: String) {
+    try {
+      val reactContext = reactInstanceManager.currentReactContext
+      if (reactContext != null) {
+        reactContext
+          .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+          .emit("PAYMENT_REQUEST", uri)
+      } else {
+        sendPaymentRequest(uri)
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "Error sending payment request", e)
+    }
   }
   
   override fun onResume() {
@@ -101,7 +138,7 @@ class MainActivity : ReactActivity() {
   
   /**
    * Try to send pending payment request to React Native
-   * Waits for React context and event listeners to be ready
+   * Waits for listener to be ready
    */
   private fun tryToSendPendingPaymentRequest(attempt: Int = 0) {
     if (pendingPaymentUri == null) {
@@ -109,20 +146,22 @@ class MainActivity : ReactActivity() {
     }
     
     val uri = pendingPaymentUri
-    val reactContext = reactInstanceManager.currentReactContext
     
-    if (reactContext != null && attempt >= 5) {
-      // Wait 1 second for event listeners to be registered
-      try {
-        reactContext
-          .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-          .emit("PAYMENT_REQUEST", uri)
-        pendingPaymentUri = null
-      } catch (e: Exception) {
-        Log.e(TAG, "Error sending payment request to React Native", e)
+    // Check if listener is ready
+    if (PaymentRequestModule.isListenerReady()) {
+      val reactContext = reactInstanceManager.currentReactContext
+      if (reactContext != null) {
+        try {
+          reactContext
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            .emit("PAYMENT_REQUEST", uri)
+          pendingPaymentUri = null
+        } catch (e: Exception) {
+          Log.e(TAG, "Error sending payment request", e)
+        }
       }
     } else if (attempt < 30) {
-      // Retry every 200ms (max 6 seconds)
+      // Wait for listener to be ready (retry every 200ms, max 6 seconds)
       Handler(Looper.getMainLooper()).postDelayed({
         tryToSendPendingPaymentRequest(attempt + 1)
       }, 200)

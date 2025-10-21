@@ -35,6 +35,7 @@ function App(): React.JSX.Element {
   const [nfcUri, setNfcUri] = useState<string | null>(null);
   const [isNfcSupported, setIsNfcSupported] = useState<boolean>(false);
   const [pendingPaymentRequest, setPendingPaymentRequest] = useState<string | null>(null);
+  const walletReadyRef = useRef<boolean>(false);
 
   // Get the bundle path on mount for iOS
   useEffect(() => {
@@ -127,8 +128,18 @@ function App(): React.JSX.Element {
     }
 
     const handlePaymentRequest = (bip21Uri: string) => {
-      // Store the pending payment to send after wallet is loaded
-      setPendingPaymentRequest(bip21Uri);
+      // If wallet is already ready, send immediately
+      if (walletReadyRef.current && webViewRef.current) {
+        webViewRef.current.postMessage(
+          JSON.stringify({
+            type: 'PAYMENT_REQUEST',
+            data: bip21Uri,
+          })
+        );
+      } else {
+        // Store as pending - will be sent when WALLET_READY is received
+        setPendingPaymentRequest(bip21Uri);
+      }
     };
 
     // Listen for payment requests
@@ -136,6 +147,12 @@ function App(): React.JSX.Element {
       'PAYMENT_REQUEST',
       handlePaymentRequest
     );
+    
+    // Signal to native that the listener is ready
+    const PaymentRequestModule = NativeModules.PaymentRequestModule;
+    if (PaymentRequestModule && PaymentRequestModule.setListenerReady) {
+      PaymentRequestModule.setListenerReady();
+    }
 
     return () => {
       subscription.remove();
@@ -287,13 +304,15 @@ function App(): React.JSX.Element {
         case 'SET_NFC_URI':
           // WebView sends the complete BIP21 URI for NFC sharing
           if (message.data && Platform.OS === 'android') {
-            console.log('Setting NFC URI:', message.data);
             setNfcUri(message.data);
           }
           break;
 
         case 'WALLET_READY':
-          // Wallet has finished loading - send pending payment request if any
+          // Wallet has finished loading
+          walletReadyRef.current = true;
+          
+          // Send pending payment request if any
           if (pendingPaymentRequest && webViewRef.current) {
             webViewRef.current.postMessage(
               JSON.stringify({

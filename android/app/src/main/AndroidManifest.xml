@@ -38,6 +38,15 @@
             <category android:name="android.intent.category.DEFAULT"/>
             <data android:scheme="ecash"/>
         </intent-filter>
+        
+        <!-- Deep link for BIP21 URIs (camera QR scanner, web links, etc.) -->
+        <!-- Note: scheme must match config.bip21Prefix in web/src/config.ts -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="ecash"/>
+        </intent-filter>
       </activity>
       
       <!-- NFC HCE Service -->

@@ -21,6 +21,7 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
               add(AppKillerPackage())
               add(NfcHcePackage())
+              add(PaymentRequestPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
