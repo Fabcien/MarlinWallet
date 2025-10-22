@@ -9,7 +9,8 @@
     "copy-web-ios": "cp -r web/dist/* ios/eCashWalletApp/web/",
     "copy-web-android": "mkdir -p android/app/src/main/assets/web/ && cp -r web/dist/* android/app/src/main/assets/web/",
     "ios": "npm run build-web && npm run copy-web-ios && react-native run-ios",
-    "android": "npm run build-web && npm run copy-web-android && react-native run-android"
+    "android": "npm run build-web && npm run copy-web-android && react-native run-android",
+    "wearos": "cd android && ./gradlew :wear:installDebug"
   },
   "dependencies": {
     "react": "18.2.0",
