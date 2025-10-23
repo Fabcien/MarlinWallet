@@ -47,6 +47,14 @@
             <category android:name="android.intent.category.BROWSABLE"/>
             <data android:scheme="ecash"/>
         </intent-filter>
+        
+        <!-- Intent filter for watch to open phone app -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="ecashwallet" android:host="open"/>
+        </intent-filter>
       </activity>
       
       <!-- NFC HCE Service -->
@@ -61,5 +69,19 @@
             android:name="android.nfc.cardemulation.host_apdu_service"
             android:resource="@xml/apdu_service"/>
       </service>
+      
+      <!-- Wearable Data Layer Service -->
+      <service 
+        android:name=".WearableListenerService"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="com.google.android.gms.wearable.BIND_LISTENER"/>
+        </intent-filter>
+      </service>
+      
+      <!-- Wearable capabilities -->
+      <meta-data
+        android:name="com.google.android.wearable.beta.app"
+        android:resource="@xml/wearable_capabilities" />
     </application>
 </manifest>

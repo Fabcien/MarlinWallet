@@ -22,6 +22,7 @@ class MainApplication : Application(), ReactApplication {
               add(AppKillerPackage())
               add(NfcHcePackage())
               add(PaymentRequestPackage())
+              add(WearableSyncPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

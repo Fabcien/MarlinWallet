@@ -362,6 +362,16 @@ function App(): React.JSX.Element {
           }
           break;
 
+        case 'SEND_ADDRESS_TO_WATCH':
+          // Send wallet address to Wear OS watch
+          if (message.data && Platform.OS === 'android') {
+            const WearableSync = NativeModules.WearableSync;
+            if (WearableSync) {
+              WearableSync.sendAddressToWatch(message.data);
+            }
+          }
+          break;
+
         default:
           // Unknown message type - log and ignore
           console.log('Unknown WebView message type:', message.type);

@@ -1,22 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout 
+<androidx.wear.widget.BoxInsetLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/iconBackground">
+    android:background="#000000">
 
-    <TextView
-        android:id="@+id/text"
+    <!-- QR Code (visible when address is available) -->
+    <ImageView
+        android:id="@+id/qrCode"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:contentDescription="QR Code"
+        android:visibility="gone"
+        app:boxedEdges="all" />
+    
+    <!-- Logo in center with circular blue background (visible with QR code) -->
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:src="@mipmap/ic_foreground"
+        android:scaleType="fitCenter"
+        android:background="@drawable/logo_background"
+        android:visibility="gone"
+        android:contentDescription="eCash Logo" />
+    
+    <!-- "Open on phone" UI (visible when no address) -->
+    <LinearLayout
+        android:id="@+id/openOnPhoneContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="eCash Wallet"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:boxedEdges="all">
+        
+        <ImageView
+            android:id="@+id/phoneIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_smartphone"
+            android:contentDescription="Phone" />
+        
+        <TextView
+            android:id="@+id/openPhoneText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Open the phone app\nto initialize"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:gravity="center" />
+    
+    </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.wear.widget.BoxInsetLayout>
 
