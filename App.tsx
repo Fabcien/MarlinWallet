@@ -363,11 +363,14 @@ function App(): React.JSX.Element {
           break;
 
         case 'SEND_ADDRESS_TO_WATCH':
-          // Send wallet address to Wear OS watch
+          // Send wallet address and BIP21 prefix to Wear OS watch
           if (message.data && Platform.OS === 'android') {
             const WearableSync = NativeModules.WearableSync;
             if (WearableSync) {
-              WearableSync.sendAddressToWatch(message.data);
+              WearableSync.sendDataToWatch(
+                message.data.address,
+                message.data.bip21Prefix
+              );
             }
           }
           break;

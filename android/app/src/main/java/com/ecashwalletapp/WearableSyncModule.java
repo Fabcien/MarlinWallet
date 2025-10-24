@@ -16,8 +16,8 @@ public class WearableSyncModule extends ReactContextBaseJavaModule {
     }
     
     @ReactMethod
-    public void sendAddressToWatch(String address) {
-        WearableListenerService.sendAddressToWatch(getReactApplicationContext(), address);
+    public void sendDataToWatch(String address, String bip21Prefix) {
+        WearableListenerService.sendDataToWatch(getReactApplicationContext(), address, bip21Prefix);
     }
 }
 

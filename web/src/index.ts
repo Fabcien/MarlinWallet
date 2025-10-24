@@ -968,8 +968,11 @@ async function loadWalletFromMnemonic(mnemonic: string) {
     // Update NFC address for tag emulation
     updateNfcAddress();
     
-    // Send address to watch
-    sendMessageToBackend('SEND_ADDRESS_TO_WATCH', address);
+    // Send address and BIP21 prefix to watch
+    sendMessageToBackend('SEND_ADDRESS_TO_WATCH', {
+        address: address,
+        bip21Prefix: config.bip21Prefix
+    });
     
     // Notify React Native that wallet is ready (for pending NFC payments)
     sendMessageToBackend('WALLET_READY', true);

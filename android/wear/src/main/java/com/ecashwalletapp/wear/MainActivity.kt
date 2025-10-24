@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import com.ecashwalletapp.NfcHceService
 import com.ecashwalletapp.R
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.tasks.Task
@@ -25,11 +26,12 @@ class MainActivity : Activity() {
         val logoImageView = findViewById<ImageView>(R.id.logo)
         val openOnPhoneContainer = findViewById<LinearLayout>(R.id.openOnPhoneContainer)
         
-        // Check if we have a wallet address
-        val address = getSharedPreferences("wallet", MODE_PRIVATE)
-            .getString("address", null)
+        // Check if we have both wallet address and BIP21 prefix
+        val prefs = getSharedPreferences("wallet", MODE_PRIVATE)
+        val address = prefs.getString("address", null)
+        val bip21Prefix = prefs.getString("bip21_prefix", null)
         
-        if (address != null) {
+        if (address != null && bip21Prefix != null) {
             // Show QR code with address
             qrCodeImageView.visibility = View.VISIBLE
             logoImageView.visibility = View.VISIBLE
@@ -37,17 +39,65 @@ class MainActivity : Activity() {
             
             val qrBitmap = generateQRCode(address, 320, 320)
             qrCodeImageView.setImageBitmap(qrBitmap)
+            
+            // Create BIP21 URI and set for NFC HCE
+            val bip21Uri = createBip21Uri(address, bip21Prefix)
+            NfcHceService.setBip21Uri(bip21Uri)
         } else {
-            // Show "open on phone" UI
+            // Show "open on phone" UI if either address or BIP21 prefix is missing
             qrCodeImageView.visibility = View.GONE
             logoImageView.visibility = View.GONE
             openOnPhoneContainer.visibility = View.VISIBLE
+            
+            // Clear NFC URI since we don't have complete wallet data
+            NfcHceService.clearBip21Uri()
             
             // Handle tap to open phone app
             openOnPhoneContainer.setOnClickListener {
                 openPhoneApp()
             }
         }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Update NFC URI when activity resumes (in case data was updated while paused)
+        updateNfcUri()
+    }
+    
+    /**
+     * Update the NFC URI based on current wallet data
+     */
+    private fun updateNfcUri() {
+        val prefs = getSharedPreferences("wallet", MODE_PRIVATE)
+        val address = prefs.getString("address", null)
+        val bip21Prefix = prefs.getString("bip21_prefix", null)
+        
+        if (address != null && bip21Prefix != null) {
+            // Create BIP21 URI and set for NFC HCE
+            val bip21Uri = createBip21Uri(address, bip21Prefix)
+            NfcHceService.setBip21Uri(bip21Uri)
+        } else {
+            // Clear NFC URI if we don't have complete wallet data
+            NfcHceService.clearBip21Uri()
+        }
+    }
+    
+    /**
+     * Create a BIP21 URI from an eCash address
+     * Strips the address prefix (ectest: or ecash:) and adds the BIP21 prefix
+     * The BIP21 prefix is received from the phone app (config.bip21Prefix from config.ts)
+     */
+    private fun createBip21Uri(address: String, bip21Prefix: String): String {
+        // Strip any existing prefix (ectest: or ecash:)
+        val cleanAddress = if (address.contains(":")) {
+            address.substring(address.indexOf(":") + 1)
+        } else {
+            address
+        }
+        
+        // Return BIP21 URI with the prefix from config
+        return "$bip21Prefix$cleanAddress"
     }
     
     private fun generateQRCode(content: String, width: Int, height: Int): Bitmap {

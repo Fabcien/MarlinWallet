@@ -20,6 +20,7 @@ public class WearableListenerService extends com.google.android.gms.wearable.Wea
     
     private static final String WALLET_DATA_PATH = "/wallet_data";
     private static final String KEY_ADDRESS = "address";
+    private static final String KEY_BIP21_PREFIX = "bip21_prefix";
     private static final String OPEN_APP_MESSAGE = "/open_app";
     
     @Override
@@ -33,17 +34,18 @@ public class WearableListenerService extends com.google.android.gms.wearable.Wea
     }
     
     /**
-     * Send wallet address to watch
+     * Send wallet data (address and BIP21 prefix) to watch
      * This is called from React Native when the wallet is ready
      */
-    public static void sendAddressToWatch(Context context, String address) {
+    public static void sendDataToWatch(Context context, String address, String bip21Prefix) {
         if (address == null || address.isEmpty()) {
             return;
         }
         
-        // Create a data map with the address
+        // Create a data map with the address and BIP21 prefix
         PutDataMapRequest dataMap = PutDataMapRequest.create(WALLET_DATA_PATH);
         dataMap.getDataMap().putString(KEY_ADDRESS, address);
+        dataMap.getDataMap().putString(KEY_BIP21_PREFIX, bip21Prefix != null ? bip21Prefix : "ecash:");
         dataMap.getDataMap().putLong("timestamp", System.currentTimeMillis()); // Force update
         
         PutDataRequest request = dataMap.asPutDataRequest();

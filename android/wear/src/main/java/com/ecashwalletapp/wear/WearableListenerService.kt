@@ -11,6 +11,7 @@ class WearableListenerService : WearableListenerService() {
     companion object {
         private const val WALLET_DATA_PATH = "/wallet_data"
         private const val KEY_ADDRESS = "address"
+        private const val KEY_BIP21_PREFIX = "bip21_prefix"
     }
     
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -18,16 +19,19 @@ class WearableListenerService : WearableListenerService() {
             if (event.type == DataEvent.TYPE_CHANGED) {
                 val item = event.dataItem
                 if (item.uri.path == WALLET_DATA_PATH) {
-                    // Extract address from data
+                    // Extract address and BIP21 prefix from data
                     val dataMap = DataMapItem.fromDataItem(item).dataMap
                     val address = dataMap.getString(KEY_ADDRESS)
+                    val bip21Prefix = dataMap.getString(KEY_BIP21_PREFIX)
                     
                     if (address != null) {
-                        // Save to SharedPreferences
-                        getSharedPreferences("wallet", MODE_PRIVATE)
-                            .edit()
-                            .putString("address", address)
-                            .apply()
+                        // Save both address and BIP21 prefix to SharedPreferences
+                        val prefs = getSharedPreferences("wallet", MODE_PRIVATE).edit()
+                        prefs.putString("address", address)
+                        if (bip21Prefix != null) {
+                            prefs.putString("bip21_prefix", bip21Prefix)
+                        }
+                        prefs.apply()
                         
                         // Restart MainActivity to show QR code
                         val intent = Intent(this, MainActivity::class.java)
