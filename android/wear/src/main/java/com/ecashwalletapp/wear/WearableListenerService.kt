@@ -25,17 +25,28 @@ class WearableListenerService : WearableListenerService() {
                     val bip21Prefix = dataMap.getString(KEY_BIP21_PREFIX)
                     
                     if (address != null) {
-                        // Save both address and BIP21 prefix to SharedPreferences
-                        val prefs = getSharedPreferences("wallet", MODE_PRIVATE).edit()
-                        prefs.putString("address", address)
-                        if (bip21Prefix != null) {
-                            prefs.putString("bip21_prefix", bip21Prefix)
-                        }
-                        prefs.apply()
+                        // Check if this is the first time receiving address
+                        val prefs = getSharedPreferences("wallet", MODE_PRIVATE)
+                        val previousAddress = prefs.getString("address", null)
+                        val wasInitialized = previousAddress != null
                         
-                        // Restart MainActivity to show QR code
+                        // Save both address and BIP21 prefix to SharedPreferences
+                        val editor = prefs.edit()
+                        editor.putString("address", address)
+                        if (bip21Prefix != null) {
+                            editor.putString("bip21_prefix", bip21Prefix)
+                        }
+                        editor.apply()
+                        
+                        // Start or refresh MainActivity
                         val intent = Intent(this, MainActivity::class.java)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        if (wasInitialized) {
+                            // App was already initialized - use SINGLE_TOP to preserve state
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        } else {
+                            // First initialization - use CLEAR_TOP to restart fresh
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        }
                         startActivity(intent)
                     }
                 }
