@@ -2,10 +2,13 @@
 
 A super simple eCash Wallet application, focusing on UX and security.
 
-At this stage it works on Android and IOS.
+At this stage it works on Android, WearOS and IOS.
 
 Run on Android:
 `npm run android`
+
+Run the Android companion app on WearOS:
+`npm run wearos`
 
 Run on IOS:
 `npm run ios`
