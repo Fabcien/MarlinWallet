@@ -10,7 +10,8 @@
     "copy-web-android": "mkdir -p android/app/src/main/assets/web/ && cp -r web/dist/* android/app/src/main/assets/web/",
     "ios": "npm run build-web && npm run copy-web-ios && react-native run-ios",
     "android": "npm run build-web && npm run copy-web-android && react-native run-android",
-    "wearos": "cd android && ./gradlew :wear:installDebug"
+    "wearos": "cd android && ./gradlew :wear:installDebug",
+    "watchos": "./scripts/run-watchos.sh"
   },
   "dependencies": {
     "react": "18.2.0",

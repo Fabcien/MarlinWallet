@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -12,9 +12,34 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		5F98C5C22E8D275B001C5363 /* RCTBundlePathModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F98C5C12E8D275B001C5363 /* RCTBundlePathModule.m */; };
+		5FB5C2A32EAE50CA005521DD /* eCashWalletWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		D2AD3CD9721F2B941074ACEE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6C1779DE88028B58A904F5CC /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5FB5C2A12EAE50CA005521DD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5FB5C2952EAE50C9005521DD;
+			remoteInfo = "eCashWalletAppWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5FB5C2A42EAE50CA005521DD /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				5FB5C2A32EAE50CA005521DD /* eCashWalletWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* eCashWalletApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = eCashWalletApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -31,24 +56,26 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-eCashWalletApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-eCashWalletApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F98C5C02E8D275B001C5363 /* RCTBundlePathModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RCTBundlePathModule.h; path = eCashWalletApp/RCTBundlePathModule.h; sourceTree = "<group>"; };
 		5F98C5C12E8D275B001C5363 /* RCTBundlePathModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RCTBundlePathModule.m; path = eCashWalletApp/RCTBundlePathModule.m; sourceTree = "<group>"; };
+		5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = eCashWalletWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C1779DE88028B58A904F5CC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = eCashWalletApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = eCashWalletApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-eCashWalletApp-eCashWalletAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-eCashWalletApp-eCashWalletAppTests.release.xcconfig"; path = "Target Support Files/Pods-eCashWalletApp-eCashWalletAppTests/Pods-eCashWalletApp-eCashWalletAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		5F98C5E52E8E672F001C5363 /* web */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5FB5C2B12EAE55F0005521DD /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
 			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = web;
-			sourceTree = "<group>";
+			target = 5FB5C2952EAE50C9005521DD /* eCashWalletWatch */;
 		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5F98C5E52E8E672F001C5363 /* web */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = web; sourceTree = "<group>"; };
+		5FB5C2972EAE50C9005521DD /* eCashWalletWatch */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (5FB5C2B12EAE55F0005521DD /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = eCashWalletWatch; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +84,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-eCashWalletApp.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5FB5C2932EAE50C9005521DD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +137,7 @@
 				5F98C5C12E8D275B001C5363 /* RCTBundlePathModule.m */,
 				13B07FAE1A68108700A75B9A /* eCashWalletApp */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				5FB5C2972EAE50C9005521DD /* eCashWalletWatch */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -116,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* eCashWalletApp.app */,
+				5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -146,10 +182,12 @@
 				WEBFILESCOPY123456789 /* Copy Web Files to Bundle */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				5FB5C2A42EAE50CA005521DD /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				5FB5C2A22EAE50CA005521DD /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5F98C5E52E8E672F001C5363 /* web */,
@@ -159,6 +197,28 @@
 			productReference = 13B07F961A680F5B00A75B9A /* eCashWalletApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		5FB5C2952EAE50C9005521DD /* eCashWalletWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5FB5C2A72EAE50CA005521DD /* Build configuration list for PBXNativeTarget "eCashWalletWatch" */;
+			buildPhases = (
+				5FB5C2922EAE50C9005521DD /* Sources */,
+				5FB5C2932EAE50C9005521DD /* Frameworks */,
+				5FB5C2942EAE50C9005521DD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5FB5C2972EAE50C9005521DD /* eCashWalletWatch */,
+			);
+			name = eCashWalletWatch;
+			packageProductDependencies = (
+			);
+			productName = "eCashWalletAppWatch Watch App";
+			productReference = 5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -166,10 +226,15 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+					};
+					5FB5C2952EAE50C9005521DD = {
+						CreatedOnToolsVersion = 16.2;
+						LastSwiftMigration = 1620;
 					};
 				};
 			};
@@ -187,6 +252,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* eCashWalletApp */,
+				5FB5C2952EAE50C9005521DD /* eCashWalletWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -199,6 +265,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				D2AD3CD9721F2B941074ACEE /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5FB5C2942EAE50C9005521DD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,7 +380,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5FB5C2922EAE50C9005521DD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5FB5C2A22EAE50CA005521DD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5FB5C2952EAE50C9005521DD /* eCashWalletWatch */;
+			targetProxy = 5FB5C2A12EAE50CA005521DD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -371,6 +459,101 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		5FB5C2A52EAE50CA005521DD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_ASSET_PATHS = "\"eCashWalletWatch/Preview Content\"";
+				DEVELOPMENT_TEAM = D9YZVNK36Q;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=watch*]" = "";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = eCashWalletWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = eCashWalletWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = org.reactjs.native.example.eCashWalletApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.eCashWalletApp.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.2;
+			};
+			name = Debug;
+		};
+		5FB5C2A62EAE50CA005521DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_ASSET_PATHS = "\"eCashWalletWatch/Preview Content\"";
+				DEVELOPMENT_TEAM = D9YZVNK36Q;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=watch*]" = "";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = eCashWalletWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = eCashWalletWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = org.reactjs.native.example.eCashWalletApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.eCashWalletApp.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.2;
 			};
 			name = Release;
 		};
@@ -448,10 +631,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -524,10 +704,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -543,6 +720,15 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5FB5C2A72EAE50CA005521DD /* Build configuration list for PBXNativeTarget "eCashWalletWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5FB5C2A52EAE50CA005521DD /* Debug */,
+				5FB5C2A62EAE50CA005521DD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
