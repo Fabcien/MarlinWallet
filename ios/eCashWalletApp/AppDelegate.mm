@@ -2,6 +2,10 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import <WatchConnectivity/WatchConnectivity.h>
+
+@interface AppDelegate () <WCSessionDelegate>
+@end
 
 @implementation AppDelegate
 
@@ -11,8 +15,39 @@
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
+  
+  // Initialize WatchConnectivity
+  if ([WCSession isSupported]) {
+    WCSession *session = [WCSession defaultSession];
+    session.delegate = self;
+    [session activateSession];
+  }
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+// MARK: - WCSessionDelegate
+
+- (void)session:(WCSession *)session activationDidCompleteWithState:(WCSessionActivationState)activationState error:(NSError *)error {
+  // Activation complete
+}
+
+- (void)sessionDidBecomeInactive:(WCSession *)session {
+  // Session became inactive
+}
+
+- (void)sessionDidDeactivate:(WCSession *)session {
+  // Reactivate the session for iOS app
+  [[WCSession defaultSession] activateSession];
+}
+
+- (void)session:(WCSession *)session didReceiveMessage:(NSDictionary<NSString *,id> *)message replyHandler:(void (^)(NSDictionary<NSString *,id> * _Nonnull))replyHandler {
+  // Handle messages from watch (e.g., "open_app" action)
+  NSString *action = message[@"action"];
+  if ([action isEqualToString:@"open_app"]) {
+    // App is already open since we received the message
+    replyHandler(@{@"status": @"ok"});
+  }
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

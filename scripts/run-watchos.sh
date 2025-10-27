@@ -38,14 +38,14 @@ fi
 
 # Fall back to simulator
 # Try to find a booted watch simulator
-BOOTED_WATCH=$(xcrun simctl list devices booted | grep "Apple Watch" | head -1 | grep -o '[A-F0-9-]\{36\}' || echo "")
+BOOTED_WATCH=$(xcrun simctl list devices booted | grep "Watch" | head -1 | grep -o '[A-F0-9-]\{36\}' || echo "")
 
 if [ -n "$BOOTED_WATCH" ]; then
     echo "📱 Found booted watch simulator: $BOOTED_WATCH"
     DEVICE_ID="$BOOTED_WATCH"
 else
     # Find any available watch simulator
-    DEVICE_ID=$(xcrun simctl list devices available | grep "Apple Watch" | head -1 | grep -o '[A-F0-9-]\{36\}' || echo "")
+    DEVICE_ID=$(xcrun simctl list devices available | grep "Watch" | head -1 | grep -o '[A-F0-9-]\{36\}' || echo "")
     
     if [ -z "$DEVICE_ID" ]; then
         echo "❌ No watch simulator found"

@@ -1,0 +1,36 @@
+import Foundation
+import WatchConnectivity
+import React
+
+@objc(WatchConnectivityModule)
+class WatchConnectivityModule: NSObject, RCTBridgeModule {
+    
+    static func moduleName() -> String! {
+        return "WatchConnectivity"
+    }
+    
+    static func requiresMainQueueSetup() -> Bool {
+        return true
+    }
+    
+    @objc func sendDataToWatch(_ address: String, bip21Prefix: String) {
+        guard WCSession.isSupported() else {
+            return
+        }
+        
+        let session = WCSession.default
+        
+        // Send data using application context (persistent, even if watch isn't reachable)
+        let context: [String: Any] = [
+            "address": address,
+            "bip21_prefix": bip21Prefix
+        ]
+        
+        do {
+            try session.updateApplicationContext(context)
+        } catch {
+            // Failed to send data to watch
+        }
+    }
+}
+
