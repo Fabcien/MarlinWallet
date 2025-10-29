@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")/../ios"
 
 # Check for connected real Apple Watch first
-REAL_WATCH=$(xcrun xctrace list devices 2>&1 | grep "Apple Watch" | grep -v "Simulator" | head -1 | grep -o '[A-F0-9-]\{8\}-[A-F0-9-]\{36\}' || echo "")
+REAL_WATCH=$(xcrun xctrace list devices 2>&1 | grep "Watch" | grep -v "Simulator" | head -1 | grep -oE '\([0-9A-F-]+\)' | tr -d '()' || echo "")
 
 if [ -n "$REAL_WATCH" ]; then
     echo "⌚ Found connected Apple Watch: $REAL_WATCH"
@@ -20,19 +20,46 @@ if [ -n "$REAL_WATCH" ]; then
       -sdk watchos \
       -configuration Debug \
       -destination "platform=watchOS,id=$DEVICE_ID" \
-      build
+      clean build
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Build failed"
+        exit 1
+    fi
     
     echo "📦 Installing to Apple Watch..."
-    # For real device, xcodebuild installs automatically with -destination
-    # Just need to find and run the app
-    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/eCashWalletApp-*/Build/Products/Debug-watchos -name "eCashWalletWatch.app" -type d | head -1)
+    
+    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/eCashWalletApp-*/Build/Intermediates.noindex/ArchiveIntermediates/eCashWalletWatch/IntermediateBuildFilesPath/UninstalledProducts/watchos -name "eCashWalletWatch.app" -type d 2>/dev/null | head -1)
+    
+    if [ -z "$APP_PATH" ]; then
+        APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/eCashWalletApp-*/Build/Products/Debug-watchos -name "eCashWalletWatch.app" -type d | head -1)
+    fi
     
     if [ -z "$APP_PATH" ]; then
         echo "❌ Could not find built app"
         exit 1
     fi
     
-    echo "✅ App installed! Launch it manually from the Apple Watch."
+    if command -v devicectl &> /dev/null; then
+        devicectl device install app --device "$DEVICE_ID" "$APP_PATH" > /dev/null 2>&1
+        INSTALL_RESULT=$?
+        
+        if [ $INSTALL_RESULT -eq 0 ]; then
+            echo "✅ App installed successfully!"
+            exit 0
+        fi
+    fi
+    
+    xcrun devicectl device install app --device "$DEVICE_ID" "$APP_PATH" > /dev/null 2>&1
+    INSTALL_RESULT=$?
+    
+    if [ $INSTALL_RESULT -ne 0 ]; then
+        echo "❌ Installation failed"
+        echo "Please ensure Developer Mode is enabled on your Apple Watch"
+        exit 1
+    fi
+    
+    echo "✅ App installed successfully!"
     exit 0
 fi
 

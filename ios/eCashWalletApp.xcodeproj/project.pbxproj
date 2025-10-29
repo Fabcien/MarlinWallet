@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -11,10 +11,11 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		5576992BAE6E0D54B5CCA787 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0C0F688D3C8D7B718B517839 /* PrivacyInfo.xcprivacy */; };
 		5F3D36BC2EAEC88A00B433AB /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F3D36BB2EAEC88A00B433AB /* WatchConnectivityBridge.m */; };
-		5F6F90E52EAF721100B16BB5 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6F90E42EAF721100B16BB5 /* WatchConnectivityManager.swift */; };
 		5F98C5C22E8D275B001C5363 /* RCTBundlePathModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F98C5C12E8D275B001C5363 /* RCTBundlePathModule.m */; };
 		5FB5C2A32EAE50CA005521DD /* eCashWalletWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5FCE45C32EB271C500215798 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCE45C22EB271C500215798 /* WatchConnectivityManager.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		D2AD3CD9721F2B941074ACEE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6C1779DE88028B58A904F5CC /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
@@ -44,6 +45,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0C0F688D3C8D7B718B517839 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = eCashWalletApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* eCashWalletApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = eCashWalletApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = eCashWalletApp/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = eCashWalletApp/AppDelegate.mm; sourceTree = "<group>"; };
@@ -57,10 +59,11 @@
 		5B7EB9410499542E8C5724F5 /* Pods-eCashWalletApp-eCashWalletAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-eCashWalletApp-eCashWalletAppTests.debug.xcconfig"; path = "Target Support Files/Pods-eCashWalletApp-eCashWalletAppTests/Pods-eCashWalletApp-eCashWalletAppTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-eCashWalletApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-eCashWalletApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F3D36BB2EAEC88A00B433AB /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
-		5F6F90E42EAF721100B16BB5 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
 		5F98C5C02E8D275B001C5363 /* RCTBundlePathModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RCTBundlePathModule.h; path = eCashWalletApp/RCTBundlePathModule.h; sourceTree = "<group>"; };
 		5F98C5C12E8D275B001C5363 /* RCTBundlePathModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RCTBundlePathModule.m; path = eCashWalletApp/RCTBundlePathModule.m; sourceTree = "<group>"; };
 		5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = eCashWalletWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5FCE45C22EB271C500215798 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		5FCE45C42EB271C900215798 /* eCashWalletApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "eCashWalletApp-Bridging-Header.h"; sourceTree = "<group>"; };
 		6C1779DE88028B58A904F5CC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = eCashWalletApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = eCashWalletApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-eCashWalletApp-eCashWalletAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-eCashWalletApp-eCashWalletAppTests.release.xcconfig"; path = "Target Support Files/Pods-eCashWalletApp-eCashWalletAppTests/Pods-eCashWalletApp-eCashWalletAppTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -68,7 +71,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5FB5C2B12EAE55F0005521DD /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		5FB5C2B12EAE55F0005521DD /* Exceptions for "eCashWalletWatch" folder in "eCashWalletWatch" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -78,8 +81,19 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5F98C5E52E8E672F001C5363 /* web */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = web; sourceTree = "<group>"; };
-		5FB5C2972EAE50C9005521DD /* eCashWalletWatch */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (5FB5C2B12EAE55F0005521DD /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = eCashWalletWatch; sourceTree = "<group>"; };
+		5F98C5E52E8E672F001C5363 /* web */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = web;
+			sourceTree = "<group>";
+		};
+		5FB5C2972EAE50C9005521DD /* eCashWalletWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5FB5C2B12EAE55F0005521DD /* Exceptions for "eCashWalletWatch" folder in "eCashWalletWatch" target */,
+			);
+			path = eCashWalletWatch;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,8 +150,8 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				5FCE45C22EB271C500215798 /* WatchConnectivityManager.swift */,
 				5F3D36BB2EAEC88A00B433AB /* WatchConnectivityBridge.m */,
-				5F6F90E42EAF721100B16BB5 /* WatchConnectivityManager.swift */,
 				5F98C5E52E8E672F001C5363 /* web */,
 				5F98C5C02E8D275B001C5363 /* RCTBundlePathModule.h */,
 				5F98C5C12E8D275B001C5363 /* RCTBundlePathModule.m */,
@@ -147,6 +161,8 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				0C0F688D3C8D7B718B517839 /* PrivacyInfo.xcprivacy */,
+				5FCE45C42EB271C900215798 /* eCashWalletApp-Bridging-Header.h */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -219,8 +235,6 @@
 				5FB5C2972EAE50C9005521DD /* eCashWalletWatch */,
 			);
 			name = eCashWalletWatch;
-			packageProductDependencies = (
-			);
 			productName = "eCashWalletAppWatch Watch App";
 			productReference = 5FB5C2962EAE50C9005521DD /* eCashWalletWatch.app */;
 			productType = "com.apple.product-type.application";
@@ -236,7 +250,7 @@
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1620;
+						LastSwiftMigration = 2600;
 					};
 					5FB5C2952EAE50C9005521DD = {
 						CreatedOnToolsVersion = 16.2;
@@ -245,7 +259,6 @@
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "eCashWalletApp" */;
-			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -253,8 +266,7 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
-			packageReferences = (
-			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -280,6 +292,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5576992BAE6E0D54B5CCA787 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -310,9 +323,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-eCashWalletApp/Pods-eCashWalletApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-eCashWalletApp/Pods-eCashWalletApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -349,9 +366,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-eCashWalletApp/Pods-eCashWalletApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-eCashWalletApp/Pods-eCashWalletApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -385,8 +406,8 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				5F98C5C22E8D275B001C5363 /* RCTBundlePathModule.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
-				5F6F90E52EAF721100B16BB5 /* WatchConnectivityManager.swift in Sources */,
 				5F3D36BC2EAEC88A00B433AB /* WatchConnectivityBridge.m in Sources */,
+				5FCE45C32EB271C500215798 /* WatchConnectivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -434,6 +455,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "eCashWalletApp-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -466,6 +488,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "eCashWalletApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";

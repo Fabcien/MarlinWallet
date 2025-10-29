@@ -13,7 +13,8 @@ class WatchConnectivityModule: NSObject, RCTBridgeModule {
         return true
     }
     
-    @objc func sendDataToWatch(_ address: String, bip21Prefix: String) {
+    @objc(sendDataToWatch:bip21Prefix:)
+    func sendDataToWatch(_ address: String, bip21Prefix: String) {
         guard WCSession.isSupported() else {
             return
         }
@@ -21,9 +22,11 @@ class WatchConnectivityModule: NSObject, RCTBridgeModule {
         let session = WCSession.default
         
         // Send data using application context (persistent, even if watch isn't reachable)
+        // Include timestamp to force update even if address didn't change
         let context: [String: Any] = [
             "address": address,
-            "bip21_prefix": bip21Prefix
+            "bip21_prefix": bip21Prefix,
+            "timestamp": Date().timeIntervalSince1970
         ]
         
         do {

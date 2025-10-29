@@ -2,54 +2,104 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var connectivityManager = WatchConnectivityManager.shared
+    @State private var showAmountEntry = false
+    @State private var paymentAmountSats: Int64? = nil
+    @State private var paymentUnit: AmountUnit = .XEC
     
     var body: some View {
-        if let walletData = connectivityManager.walletData {
-            // Show QR code with wallet address
-            QRCodeView(walletData: walletData)
-        } else {
-            // Show "open on phone" screen
-            OpenOnPhoneView {
-                connectivityManager.openPhoneApp()
+        NavigationStack {
+            Group {
+                if let walletData = connectivityManager.walletData {
+                    // Show QR code with wallet address
+                    if showAmountEntry {
+                        AmountEntryView(
+                            amountSats: $paymentAmountSats,
+                            unit: $paymentUnit,
+                            onApply: {
+                                showAmountEntry = false
+                            },
+                            onClear: {
+                                paymentAmountSats = nil
+                                showAmountEntry = false
+                            }
+                        )
+                    } else {
+                        QRCodeView(
+                            walletData: walletData,
+                            amountSats: paymentAmountSats,
+                            amountUnit: paymentUnit,
+                            onTapQRCode: {
+                                showAmountEntry = true
+                            }
+                        )
+                    }
+                } else {
+                    // Show "open on phone" screen
+                    OpenOnPhoneView {
+                        connectivityManager.openPhoneApp()
+                    }
+                }
             }
+            .navigationBarHidden(true)
         }
     }
 }
 
 struct QRCodeView: View {
     let walletData: WalletData
+    let amountSats: Int64?
+    let amountUnit: AmountUnit
+    let onTapQRCode: () -> Void
     
     var body: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 8) {
-                // eCash logo at top (fixed height)
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.0, green: 0.48, blue: 0.89))
-                        .frame(width: 18, height: 18)
-                    
-                    Image("Logo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 18, height: 18)
-                        .clipShape(Circle())
-                }
+        VStack(spacing: 0) {
+            // Logo section (fixed height: 20pt)
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.0, green: 0.48, blue: 0.89))
+                    .frame(width: 20, height: 20)
                 
-                // QR Code - takes all remaining space
-                GeometryReader { geometry in
-                    let qrSize = min(geometry.size.width, geometry.size.height)
-                    
-                    SimpleQRCodeView(
-                        content: createBip21Uri(),
-                        size: qrSize
-                    )
-                    .frame(width: geometry.size.width, height: geometry.size.height)
+                Image("Logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .clipShape(Circle())
+            }
+            .frame(height: 20)
+            .padding(.bottom, 4)
+            
+            // QR Code (flexible - takes ALL remaining space)
+            GeometryReader { geometry in
+                let qrSize = min(geometry.size.width, geometry.size.height)
+                
+                SimpleQRCodeView(
+                    content: createBip21Uri(),
+                    size: qrSize
+                )
+                .frame(width: qrSize, height: qrSize)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onTapGesture {
+                    onTapQRCode()
                 }
             }
-            .padding(4)
+            
+            // Amount section (fixed height: 28pt)
+            Group {
+                if let amountSats = amountSats {
+                    Text(formatAmount(amountSats))
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                } else {
+                    Text(" ")
+                        .font(.system(size: 12))
+                }
+            }
+            .frame(height: 12)
+            .padding(.top, 4)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black)
+        .edgesIgnoringSafeArea(.bottom)
     }
     
     private func createBip21Uri() -> String {
@@ -58,7 +108,31 @@ struct QRCodeView: View {
             ? String(walletData.address.split(separator: ":")[1])
             : walletData.address
         
-        return "\(walletData.bip21Prefix)\(prefixlessAddress)"
+        var uri = "\(walletData.bip21Prefix)\(prefixlessAddress)"
+        
+        // Add amount if set
+        if let amountSats = amountSats {
+            let amountXec = Double(amountSats) / 100.0
+            uri += String(format: "?amount=%.2f", amountXec)
+        }
+        
+        return uri
+    }
+    
+    private func formatAmount(_ amountSats: Int64) -> String {
+        let value = Double(amountSats) / 100.0
+        let displayValue: Double
+        
+        switch amountUnit {
+        case .XEC:
+            displayValue = value
+        case .kXEC:
+            displayValue = value / 1000.0
+        case .MXEC:
+            displayValue = value / 1000000.0
+        }
+        
+        return String(format: "Pay %.2f %@", displayValue, amountUnit.rawValue)
     }
 }
 
