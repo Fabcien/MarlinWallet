@@ -206,10 +206,11 @@
                 android:gravity="center"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingLeft="6dp"
-                android:paddingRight="6dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp" />
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:background="@drawable/rounded_background" />
         
         </LinearLayout>
         
