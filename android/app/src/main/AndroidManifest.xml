@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
@@ -73,7 +74,8 @@
       <!-- Wearable Data Layer Service -->
       <service 
         android:name=".WearableListenerService"
-        android:exported="true">
+        android:exported="true"
+        tools:ignore="WearableBindListener">
         <intent-filter>
             <action android:name="com.google.android.gms.wearable.BIND_LISTENER"/>
         </intent-filter>
@@ -82,6 +84,7 @@
       <!-- Wearable capabilities -->
       <meta-data
         android:name="com.google.android.wearable.beta.app"
-        android:resource="@xml/wearable_capabilities" />
+        android:resource="@xml/wearable_capabilities"
+        tools:replace="android:resource" />
     </application>
 </manifest>

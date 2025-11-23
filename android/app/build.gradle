@@ -125,6 +125,9 @@ dependencies {
     
     // Wearable Data Layer
     implementation "com.google.android.gms:play-services-wearable:18.1.0"
+    
+    // Embed WearOS companion app
+    wearApp project(':wear')
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
