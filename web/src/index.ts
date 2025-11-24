@@ -3,7 +3,7 @@
 // ============================================================================
 
 import {Wallet} from 'ecash-wallet';
-import {ChronikClient} from 'chronik-client';
+import {ChronikClient, ConnectionStrategy} from 'chronik-client';
 import {DEFAULT_DUST_SATS} from 'ecash-lib';
 import PullToRefresh from 'pulltorefreshjs';
 import {TransactionHistoryManager} from './transaction-history';
@@ -1529,7 +1529,7 @@ async function initializeApp() {
     // authentication is complete.
     showLoadingScreen('Authentication required');
 
-    chronik = new ChronikClient(config.chronikUrls);
+    chronik = await ChronikClient.useStrategy(ConnectionStrategy.ClosestFirst, config.chronikUrls);
     
     try {
         await loadWallet();
