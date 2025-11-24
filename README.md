@@ -1,4 +1,4 @@
-# eCash Wallet
+# Marlin Wallet
 
 A super simple eCash Wallet application, focusing on UX and security.
 

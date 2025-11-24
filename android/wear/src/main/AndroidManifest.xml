@@ -26,7 +26,7 @@
             android:value="false" />
 
         <activity
-            android:name="com.ecashwalletapp.wear.MainActivity"
+            android:name="com.marlinwallet.app.wear.MainActivity"
             android:exported="true"
             android:label="@string/app_name">
             <intent-filter>
@@ -37,7 +37,7 @@
         
         <!-- Wearable Data Layer Service -->
         <service 
-            android:name="com.ecashwalletapp.wear.WearableListenerService"
+            android:name="com.marlinwallet.app.wear.WearableListenerService"
             android:exported="true"
             tools:ignore="WearableBindListener">
             <intent-filter>
@@ -47,7 +47,7 @@
         
         <!-- NFC HCE Service -->
         <service
-            android:name="com.ecashwalletapp.NfcHceService"
+            android:name="com.marlinwallet.app.NfcHceService"
             android:exported="true"
             android:permission="android.permission.BIND_NFC_SERVICE">
             <intent-filter>

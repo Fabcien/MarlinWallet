@@ -36,7 +36,7 @@ local.properties
 
 # IOS
 ios/web/
-ios/eCashWalletApp/web/
+ios/MarlinWallet/web/
 
 # node.js
 #

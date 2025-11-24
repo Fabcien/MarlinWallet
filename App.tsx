@@ -235,7 +235,7 @@ function App(): React.JSX.Element {
   const storeMnemonic = async (mnemonic: string): Promise<void> => {
     let closeWalletMessage = 'Close the wallet';
     try {
-      await Keychain.setGenericPassword('eCashWallet', mnemonic, {
+      await Keychain.setGenericPassword('MarlinWallet', mnemonic, {
         accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
         accessGroup: undefined,
         authenticationPrompt: {
@@ -243,7 +243,7 @@ function App(): React.JSX.Element {
           description: 'This is required to store your private key to the device secure storage',
           cancel: closeWalletMessage,
         },
-        service: 'eCashWallet',
+        service: 'MarlinWallet',
       });
     } catch (error) {
       console.log('storeMnemonic: Error storing mnemonic in keychain:', error);
@@ -264,7 +264,7 @@ function App(): React.JSX.Element {
           description: 'This is required to load your private key from the secure storage',
           cancel: watchOnlyMessage,
         },
-        service: 'eCashWallet',
+        service: 'MarlinWallet',
       });
       
       if (credentials && credentials.password) {

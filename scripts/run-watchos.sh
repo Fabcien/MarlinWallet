@@ -15,8 +15,8 @@ if [ -n "$REAL_WATCH" ]; then
     IS_SIMULATOR=false
     
     echo "🔨 Building for real Apple Watch..."
-    xcodebuild -workspace eCashWalletApp.xcworkspace \
-      -scheme eCashWalletWatch \
+    xcodebuild -workspace MarlinWallet.xcworkspace \
+      -scheme MarlinWalletWatch \
       -sdk watchos \
       -configuration Debug \
       -destination "platform=watchOS,id=$DEVICE_ID" \
@@ -29,10 +29,10 @@ if [ -n "$REAL_WATCH" ]; then
     
     echo "📦 Installing to Apple Watch..."
     
-    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/eCashWalletApp-*/Build/Intermediates.noindex/ArchiveIntermediates/eCashWalletWatch/IntermediateBuildFilesPath/UninstalledProducts/watchos -name "eCashWalletWatch.app" -type d 2>/dev/null | head -1)
+    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/MarlinWallet-*/Build/Intermediates.noindex/ArchiveIntermediates/MarlinWalletWatch/IntermediateBuildFilesPath/UninstalledProducts/watchos -name "MarlinWalletWatch.app" -type d 2>/dev/null | head -1)
     
     if [ -z "$APP_PATH" ]; then
-        APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/eCashWalletApp-*/Build/Products/Debug-watchos -name "eCashWalletWatch.app" -type d | head -1)
+        APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/MarlinWallet-*/Build/Products/Debug-watchos -name "MarlinWalletWatch.app" -type d | head -1)
     fi
     
     if [ -z "$APP_PATH" ]; then
@@ -87,15 +87,15 @@ else
 fi
 
 echo "🔨 Building watchOS app..."
-xcodebuild -workspace eCashWalletApp.xcworkspace \
-  -scheme eCashWalletWatch \
+xcodebuild -workspace MarlinWallet.xcworkspace \
+  -scheme MarlinWalletWatch \
   -sdk watchsimulator \
   -configuration Debug \
   -destination "platform=watchOS Simulator,id=$DEVICE_ID" \
   build
 
 echo "📦 Installing app..."
-APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/eCashWalletApp-*/Build/Products/Debug-watchsimulator -name "eCashWalletWatch.app" -type d | head -1)
+APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/MarlinWallet-*/Build/Products/Debug-watchsimulator -name "MarlinWalletWatch.app" -type d | head -1)
 
 if [ -z "$APP_PATH" ]; then
     echo "❌ Could not find built app"

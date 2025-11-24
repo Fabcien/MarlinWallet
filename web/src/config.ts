@@ -1,5 +1,5 @@
 /**
- * Configuration for the eCash Wallet
+ * Configuration for the Marlin Wallet
  */
 
 export const config = {
