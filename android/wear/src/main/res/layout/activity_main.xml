@@ -24,7 +24,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center"
-                android:src="@mipmap/ic_foreground"
+                android:src="@drawable/marlinwalletlogo"
                 android:scaleType="fitCenter"
                 android:background="@drawable/logo_background"
                 android:contentDescription="eCash Logo" />

@@ -21,7 +21,7 @@ import './main.css';
 
 // Icons
 import backArrowIcon from './back-arrow.svg';
-import ecashLogo from './ecash.svg';
+import marlin from './marlin.svg';
 import editIcon from './edit.svg';
 import historyIcon from './history.svg';
 import noCameraIcon from './camera.svg';
@@ -1486,9 +1486,9 @@ async function initializeApp() {
     }
 
     // Set the eCash logo source
-    const logoEl = document.getElementById('ecash-logo') as HTMLImageElement;
+    const logoEl = document.getElementById('marlin-logo') as HTMLImageElement;
     if (logoEl) {
-        logoEl.src = ecashLogo;
+        logoEl.src = marlin;
     }
     // Set the edit icon source
     const editIconEl = document.getElementById('edit-icon') as HTMLImageElement;
