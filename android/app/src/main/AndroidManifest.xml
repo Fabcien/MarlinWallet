@@ -80,11 +80,5 @@
             <action android:name="com.google.android.gms.wearable.BIND_LISTENER"/>
         </intent-filter>
       </service>
-      
-      <!-- Wearable capabilities -->
-      <meta-data
-        android:name="com.google.android.wearable.beta.app"
-        android:resource="@xml/wearable_capabilities"
-        tools:replace="android:resource" />
     </application>
 </manifest>
