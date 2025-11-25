@@ -17,6 +17,7 @@ import {
   Platform,
   Linking,
   DeviceEventEmitter,
+  AppState,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -191,6 +192,23 @@ function App(): React.JSX.Element {
 
     // Listen for URLs while app is running
     const subscription = Linking.addEventListener('url', handleUrl);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Monitor app state and sync wallet when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && walletReadyRef.current && webViewRef.current) {
+        // App came to foreground, sync the wallet
+        console.log('App came to foreground, syncing wallet...');
+        sendMessageToWebView({
+          type: 'SYNC_WALLET',
+        });
+      }
+    });
 
     return () => {
       subscription.remove();

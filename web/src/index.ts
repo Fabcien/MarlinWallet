@@ -1684,7 +1684,7 @@ async function initializeApp() {
 }
 
 // Listen for payment requests from React Native
-function handlePaymentRequest(event: any) {
+async function handlePaymentRequest(event: any) {
     try {
         const message = JSON.parse(event.data);
         
@@ -1698,6 +1698,18 @@ function handlePaymentRequest(event: any) {
                 openSendScreenWithAddress(parsed.address, parsed.sats);
             } else {
                 webViewError('Invalid BIP21 URI:', bip21Uri);
+            }
+        } else if (message.type === 'SYNC_WALLET') {
+            // Sync wallet and reconnect WebSocket when app comes to foreground
+            webViewLog('Received sync request from app foreground');
+            if (ecashWallet) {
+                // Sync wallet first to update balance
+                await syncWallet();
+                // Then reconnect WebSocket and resubscribe to address
+                const address = getAddress(ecashWallet);
+                if (address) {
+                    await subscribeToAddress(address);
+                }
             }
         }
     } catch (error) {
