@@ -1,12 +1,16 @@
 package com.marlinwallet.app
 
 import android.content.Intent
+import android.graphics.Color
 import android.nfc.NfcAdapter
 import android.nfc.NdefMessage
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -33,9 +37,27 @@ class MainActivity : ReactActivity() {
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    
+    // Configure window for Android 15+ (API 35)
+    // Make status bar transparent - padding is handled in React Native
+    window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      window.statusBarColor = Color.TRANSPARENT
+    }
+    
     // Reset listener state on app launch
     PaymentRequestModule.reset()
     handleNfcIntent(intent)
+  }
+  
+  override fun onResume() {
+    super.onResume()
+    
+    // Check if we have a pending payment request to send
+    if (pendingPaymentUri != null) {
+      tryToSendPendingPaymentRequest()
+    }
   }
   
   override fun onNewIntent(intent: Intent) {
@@ -127,14 +149,6 @@ class MainActivity : ReactActivity() {
     }
   }
   
-  override fun onResume() {
-    super.onResume()
-    
-    // Check if we have a pending payment request to send
-    if (pendingPaymentUri != null) {
-      tryToSendPendingPaymentRequest()
-    }
-  }
   
   /**
    * Try to send pending payment request to React Native

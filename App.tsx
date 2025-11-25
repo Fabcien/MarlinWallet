@@ -416,11 +416,14 @@ function App(): React.JSX.Element {
       start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}
       style={styles.container}>
-      {Platform.OS === 'ios' && (
-        <StatusBar barStyle="light-content" translucent={true} />
-      )}
+      <StatusBar 
+        barStyle="light-content" 
+        translucent={true}
+        backgroundColor="transparent"
+        hidden={false}
+      />
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.webViewContainer}>
+        <View style={[styles.webViewContainer, Platform.OS === 'android' && styles.androidTopPadding]}>
           <WebView
             ref={webViewRef}
             source={webViewSource}
@@ -469,6 +472,9 @@ const styles = StyleSheet.create({
   webViewContainer: {
     flex: 1,
     backgroundColor: 'transparent',
+  },
+  androidTopPadding: {
+    paddingTop: StatusBar.currentHeight || 0,
   },
   webView: {
     flex: 1,
