@@ -52,6 +52,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "5FB5C2952EAE50C9005521DD"
+            BuildableName = "MarlinWalletWatch.app"
+            BlueprintName = "MarlinWalletWatch"
+            ReferencedContainer = "container:MarlinWallet.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
