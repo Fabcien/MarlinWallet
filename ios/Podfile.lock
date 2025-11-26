@@ -937,6 +937,8 @@ PODS:
   - React-Mapbuffer (0.74.7):
     - glog
     - React-debug
+  - react-native-safe-area-context (5.6.2):
+    - React-Core
   - react-native-webview (13.16.0):
     - DoubleConversion
     - glog
@@ -1266,6 +1268,7 @@ DEPENDENCIES:
   - React-jsitracing (from `../node_modules/react-native/ReactCommon/hermes/executor/`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
+  - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1362,6 +1365,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
+  react-native-safe-area-context:
+    :path: "../node_modules/react-native-safe-area-context"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   React-nativeconfig:
@@ -1449,6 +1454,7 @@ SPEC CHECKSUMS:
   React-jsitracing: a884f4eb46ba8c373d909f9a712824af65ff41b8
   React-logger: 58cd5ca2c3ab03a06b33e6d46a210d2b17ca116d
   React-Mapbuffer: f245095650540b8ddd09ac907a79605f68b1f4d4
+  react-native-safe-area-context: 6c8805194166a9d6b3e53ba69ca76756c9bfb052
   react-native-webview: b836f1f162b87b5b8351611b5d5299f2b699360a
   React-nativeconfig: 3b359be06d9ee8d64c1eacbca4f1040f331573fd
   React-NativeModulesApple: 8fa1db4855dbc1d437d017bc080e75535c85d2d2

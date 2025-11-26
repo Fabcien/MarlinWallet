@@ -39,11 +39,19 @@ class MainActivity : ReactActivity() {
     super.onCreate(savedInstanceState)
     
     // Configure window for Android 15+ (API 35)
+    // Enable edge-to-edge display for safe area insets
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+    
     // Make status bar transparent - padding is handled in React Native
     window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
     window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       window.statusBarColor = Color.TRANSPARENT
+    }
+    
+    // Make navigation bar transparent - padding is handled in React Native
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      window.navigationBarColor = Color.TRANSPARENT
     }
     
     // Reset listener state on app launch

@@ -6,7 +6,6 @@
 
 import React, {useState, useRef, useEffect} from 'react';
 import {
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   View,
@@ -19,6 +18,8 @@ import {
   DeviceEventEmitter,
   AppState,
 } from 'react-native';
+import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {SafeAreaView as RNSafeAreaView} from 'react-native';
 import {WebView} from 'react-native-webview';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import * as Keychain from 'react-native-keychain';
@@ -30,7 +31,8 @@ interface WebViewMessage {
   data?: any;
 }
 
-function App(): React.JSX.Element {
+function AppContent(): React.JSX.Element {
+  const insets = useSafeAreaInsets();
   const webViewRef = useRef<WebView>(null);
   const [webViewSource, setWebViewSource] = useState<any>(null);
   const [nfcUri, setNfcUri] = useState<string | null>(null);
@@ -420,10 +422,8 @@ function App(): React.JSX.Element {
         {Platform.OS === 'ios' && (
           <StatusBar barStyle="light-content" translucent={false} backgroundColor="#000000" />
         )}
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-          </View>
-        </SafeAreaView>
+        <View style={styles.loadingContainer}>
+        </View>
       </View>
     );
   }
@@ -440,47 +440,56 @@ function App(): React.JSX.Element {
         backgroundColor="transparent"
         hidden={false}
       />
-      <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.webViewContainer, Platform.OS === 'android' && styles.androidTopPadding]}>
-          <WebView
-            ref={webViewRef}
-            source={webViewSource}
-            style={styles.webView}
-            onMessage={handleWebViewMessage}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={true}
-            scalesPageToFit={true}
-            mixedContentMode="compatibility"
-            originWhitelist={['*']}
-            allowFileAccess={true}
-            allowFileAccessFromFileURLs={true}
-            allowUniversalAccessFromFileURLs={true}
-            mediaPlaybackRequiresUserAction={false}
-            allowsInlineMediaPlayback={true}
-            mediaCapturePermissionGrantType="grant"
-            onError={(syntheticEvent) => {
-              const {nativeEvent} = syntheticEvent;
-              console.error('WebView error:', nativeEvent);
-              Alert.alert('WebView Error', 'Failed to load the wallet interface');
-            }}
-            onHttpError={(syntheticEvent) => {
-              const {nativeEvent} = syntheticEvent;
-              console.error('WebView HTTP error:', nativeEvent);
-            }}
-          />
-        </View>
-      </SafeAreaView>
+      <View style={[
+        styles.webViewContainer,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        }
+      ]}>
+        <WebView
+          ref={webViewRef}
+          source={webViewSource}
+          style={styles.webView}
+          onMessage={handleWebViewMessage}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={true}
+          scalesPageToFit={true}
+          mixedContentMode="compatibility"
+          originWhitelist={['*']}
+          allowFileAccess={true}
+          allowFileAccessFromFileURLs={true}
+          allowUniversalAccessFromFileURLs={true}
+          mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback={true}
+          mediaCapturePermissionGrantType="grant"
+          onError={(syntheticEvent) => {
+            const {nativeEvent} = syntheticEvent;
+            console.error('WebView error:', nativeEvent);
+            Alert.alert('WebView Error', 'Failed to load the wallet interface');
+          }}
+          onHttpError={(syntheticEvent) => {
+            const {nativeEvent} = syntheticEvent;
+            console.error('WebView HTTP error:', nativeEvent);
+          }}
+        />
+      </View>
     </LinearGradient>
+  );
+}
+
+function App(): React.JSX.Element {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
   );
 }
 
 const {width, height} = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  safeArea: {
     flex: 1,
   },
   loadingScreen: {
@@ -490,9 +499,6 @@ const styles = StyleSheet.create({
   webViewContainer: {
     flex: 1,
     backgroundColor: 'transparent',
-  },
-  androidTopPadding: {
-    paddingTop: StatusBar.currentHeight || 0,
   },
   webView: {
     flex: 1,
