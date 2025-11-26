@@ -6,6 +6,8 @@
     "android": "npm run build-web && npm run copy-web-android && react-native run-android",
     "build-android-release-aab": "npm run build-web && npm run copy-web-android && cd android && ./gradlew bundleRelease",
     "build-android-release-apk": "npm run build-web && npm run copy-web-android && cd android && ./gradlew assembleRelease",
+    "build-wearos-release-aab": "cd android && ./gradlew :wear:bundleRelease",
+    "build-wearos-release-apk": "cd android && ./gradlew :wear:assembleRelease",
     "build-ios-release": "npm run build-web && npm run copy-web-ios && cd ios && xcodebuild -workspace MarlinWallet.xcworkspace -scheme MarlinWallet -configuration Release archive -allowProvisioningUpdates",
     "build-web": "pushd web && npm run build && popd",
     "copy-web-android": "mkdir -p android/app/src/main/assets/web/ && cp -r web/dist/* android/app/src/main/assets/web/",

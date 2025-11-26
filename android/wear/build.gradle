@@ -1,7 +1,16 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 
+// Load keystore properties if they exist
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
+    archivesBaseName = "marlin-wallet-wear"
+    
     namespace "com.marlinwallet.app"
     compileSdk 35
 
@@ -9,8 +18,8 @@ android {
         applicationId "com.marlinwallet.app"
         minSdk 28  // Wear OS 3.0+
         targetSdk 35
-        versionCode 3
-        versionName "1.2"
+        versionCode rootProject.ext.baseVersionCode + 1000
+        versionName rootProject.ext.versionName
     }
 
     signingConfigs {
@@ -20,6 +29,25 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (keystorePropertiesFile.exists()) {
+                // Resolve keystore path relative to android directory
+                def keystorePath = keystoreProperties['RELEASE_STORE_FILE']
+                def keystoreFile
+                if (keystorePath.startsWith('/')) {
+                    keystoreFile = file(keystorePath)
+                } else {
+                    // Resolve relative to android directory
+                    def androidDir = rootProject.rootDir
+                    def keystoreAbsolutePath = new File(androidDir, keystorePath).getAbsolutePath()
+                    keystoreFile = file(keystoreAbsolutePath)
+                }
+                storeFile keystoreFile
+                storePassword keystoreProperties['RELEASE_STORE_PASSWORD']
+                keyAlias keystoreProperties['RELEASE_KEY_ALIAS']
+                keyPassword keystoreProperties['RELEASE_KEY_PASSWORD']
+            }
+        }
     }
 
     buildTypes {
@@ -27,6 +55,12 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            } else {
+                // Fallback to debug if keystore.properties doesn't exist
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
