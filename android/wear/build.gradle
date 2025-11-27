@@ -83,6 +83,9 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
     
+    // Splash screen library (required for Wear OS)
+    implementation "androidx.core:core-splashscreen:1.2.0"
+    
     // Wear OS specific
     compileOnly "com.google.android.wearable:wearable:2.9.0"
     implementation "androidx.wear:wear-ongoing:1.0.0"

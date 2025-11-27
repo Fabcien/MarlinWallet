@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.wear.widget.SwipeDismissFrameLayout
 import com.marlinwallet.app.NfcHceService
 import com.marlinwallet.app.R
@@ -30,6 +31,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var qrAmountLabel: TextView
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install splash screen before calling super.onCreate()
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
