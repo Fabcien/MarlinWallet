@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.nfc.NfcAdapter
 import android.nfc.NdefMessage
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +12,7 @@ import android.view.WindowManager
 import androidx.core.view.WindowCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
+import com.facebook.react.ReactHost
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -21,6 +21,7 @@ class MainActivity : ReactActivity() {
 
   private val TAG = "MainActivity"
   private var pendingPaymentUri: String? = null
+  private var reactActivityDelegate: ReactActivityDelegate? = null
   
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
@@ -32,8 +33,21 @@ class MainActivity : ReactActivity() {
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
    * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
    */
-  override fun createReactActivityDelegate(): ReactActivityDelegate =
-      DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+  override fun createReactActivityDelegate(): ReactActivityDelegate {
+    val delegate = DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+    reactActivityDelegate = delegate
+    return delegate
+  }
+  
+  /**
+   * Override getReactHost to return the ReactHost from Application (New Architecture)
+   */
+  override fun getReactHost(): ReactHost {
+    // Cast directly to MainApplication to access non-nullable reactHost
+    val mainApp = application as? MainApplication
+      ?: throw IllegalStateException("Application must be MainApplication")
+    return mainApp.reactHost
+  }
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -45,14 +59,10 @@ class MainActivity : ReactActivity() {
     // Make status bar transparent - padding is handled in React Native
     window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
     window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      window.statusBarColor = Color.TRANSPARENT
-    }
+    window.statusBarColor = Color.TRANSPARENT
     
     // Make navigation bar transparent - padding is handled in React Native
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      window.navigationBarColor = Color.TRANSPARENT
-    }
+    window.navigationBarColor = Color.TRANSPARENT
     
     // Reset listener state on app launch
     PaymentRequestModule.reset()
@@ -140,26 +150,51 @@ class MainActivity : ReactActivity() {
   }
   
   /**
+   * Get ReactContext from ReactActivityDelegate (New Architecture)
+   */
+  private fun getReactContext(): com.facebook.react.bridge.ReactContext? {
+    return try {
+      reactActivityDelegate?.reactHost?.currentReactContext
+    } catch (e: Exception) {
+      null
+    }
+  }
+  
+  /**
    * Send payment request immediately when app is already running
    */
   private fun sendPaymentRequestImmediately(uri: String) {
-    try {
-      val reactContext = reactInstanceManager.currentReactContext
-      if (reactContext != null) {
+    val reactContext = getReactContext()
+    if (reactContext != null) {
+      try {
         reactContext
           .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
           .emit("PAYMENT_REQUEST", uri)
-      } else {
+      } catch (e: Exception) {
+        Log.e(TAG, "Error sending payment request", e)
+        // Fallback: store for later
         sendPaymentRequest(uri)
       }
-    } catch (e: Exception) {
-      Log.e(TAG, "Error sending payment request", e)
+    } else {
+      // ReactContext not available yet, store for later
+      sendPaymentRequest(uri)
     }
   }
   
   
   /**
-   * Try to send pending payment request to React Native
+   * Retry sending payment request after a delay
+   */
+  private fun retryPaymentRequest(attempt: Int) {
+    if (attempt < 30) {
+      Handler(Looper.getMainLooper()).postDelayed({
+        tryToSendPendingPaymentRequest(attempt + 1)
+      }, 200)
+    }
+  }
+  
+  /**
+   * Try to send pending payment request to React Native (New Architecture)
    * Waits for listener to be ready
    */
   private fun tryToSendPendingPaymentRequest(attempt: Int = 0) {
@@ -170,23 +205,25 @@ class MainActivity : ReactActivity() {
     val uri = pendingPaymentUri
     
     // Check if listener is ready
-    if (PaymentRequestModule.isListenerReady()) {
-      val reactContext = reactInstanceManager.currentReactContext
-      if (reactContext != null) {
-        try {
-          reactContext
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            .emit("PAYMENT_REQUEST", uri)
-          pendingPaymentUri = null
-        } catch (e: Exception) {
-          Log.e(TAG, "Error sending payment request", e)
-        }
-      }
-    } else if (attempt < 30) {
-      // Wait for listener to be ready (retry every 200ms, max 6 seconds)
-      Handler(Looper.getMainLooper()).postDelayed({
-        tryToSendPendingPaymentRequest(attempt + 1)
-      }, 200)
+    if (!PaymentRequestModule.isListenerReady()) {
+      retryPaymentRequest(attempt)
+      return
+    }
+    
+    val reactContext = getReactContext()
+    if (reactContext == null) {
+      retryPaymentRequest(attempt)
+      return
+    }
+    
+    try {
+      reactContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+        .emit("PAYMENT_REQUEST", uri)
+      pendingPaymentUri = null
+    } catch (e: Exception) {
+      Log.e(TAG, "Error sending payment request", e)
+      retryPaymentRequest(attempt)
     }
   }
 }
