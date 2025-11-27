@@ -6,8 +6,8 @@ buildscript {
         ndkVersion = "29.0.14206865"
         kotlinVersion = "2.2.21"
         // Version configuration - update these when bumping version
-        baseVersionCode = 5
-        versionName = "1.4"
+        baseVersionCode = 6
+        versionName = "1.5"
     }
     repositories {
         google()
