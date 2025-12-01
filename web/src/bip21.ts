@@ -8,6 +8,8 @@ import {satsToXec} from './amount';
 export interface Bip21ParseResult {
     address: string;
     sats?: number;
+    // OP_RETURN data in hex (without 6a OP_RETURN opcode)
+    opReturnRaw?: string;
 }
 
 /**
@@ -83,6 +85,16 @@ export function parseBip21Uri(uri: string): Bip21ParseResult | null {
             if (!isNaN(amountXec) && amountXec > 0) {
                 // Convert XEC to satoshis (1 XEC = 100 sats) and ensure it's an integer
                 result.sats = Math.round(amountXec * 100);
+            }
+        }
+        
+        // Parse op_return_raw parameter if present
+        const opReturnRaw = url.searchParams.get('op_return_raw');
+        if (opReturnRaw) {
+            // Validate it's a valid hex string with even number of characters
+            const cleanHex = opReturnRaw.trim().toUpperCase();
+            if (/^[0-9A-F]+$/.test(cleanHex) && cleanHex.length % 2 === 0) {
+                result.opReturnRaw = cleanHex;
             }
         }
         

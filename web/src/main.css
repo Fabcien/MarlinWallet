@@ -279,6 +279,22 @@ body {
 
 /***** Wallet card *****/
 
+/* PayButton logo container */
+.paybutton-logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.paybutton-logo {
+    max-width: 200px;
+    max-height: 50px;
+    width: auto;
+    height: auto;
+}
+
 .card {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);

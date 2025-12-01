@@ -9,12 +9,13 @@ import PullToRefresh from 'pulltorefreshjs';
 import {TransactionHistoryManager} from './transaction-history';
 import {sendMessageToBackend, webViewLog, webViewError} from './common';
 import {calculateTransactionAmountSats, satsToXec, calculateMaxSpendableAmount, estimateTransactionFee} from './amount';
-import {getAddress, WalletData, sendTransaction} from './wallet';
+import {getAddress, WalletData, buildTx} from './wallet';
 import {getMnemonic, storeMnemonic, loadMnemonic, generateMnemonic, validateMnemonic} from './mnemonic';
 import {copyAddress, isValidECashAddress} from './address';
 import {generateQRCode, hideNoCameraFallback, stopQRScanner, startQRScanner} from './qrcode';
 import {config} from './config';
 import {parseBip21Uri, createBip21Uri} from './bip21';
+import {isPayButtonTransaction} from './paybutton';
 
 // Styles
 import './main.css';
@@ -27,6 +28,7 @@ import historyIcon from './history.svg';
 import noCameraIcon from './camera.svg';
 import qrCodeIcon from './qrcode.svg';
 import settingsIcon from './settings.svg';
+import paybuttonLogo from './paybutton.svg';
 
 // ============================================================================
 // GLOBALS
@@ -65,6 +67,9 @@ let transactionHistory: TransactionHistoryManager | null = null;
 
 // Settings state
 let requireHoldToSend = true;
+
+// OP_RETURN data for the current send transaction (for PayButton support)
+let sendOpReturnRaw: string | undefined = undefined;
 
 // ============================================================================
 // SETTINGS PERSISTENCE
@@ -206,6 +211,12 @@ async function showSendScreen() {
         amountSlider.disabled = false; // Enable slider for manual entry
     }
     
+    // Clear opReturnRaw when resetting the screen
+    sendOpReturnRaw = undefined;
+    
+    // Hide PayButton logo
+    updatePayButtonLogoVisibility();
+    
     // Hide fee display
     if (feeDisplay) {
         feeDisplay.style.display = 'none';
@@ -234,9 +245,13 @@ async function showSendScreen() {
     updateSliderMarks(5.46, maxSpendable);
 }
 
-async function openSendScreenWithAddress(address: string, sats?: number) {
+async function openSendScreenWithAddress(address: string, sats?: number, opReturnRaw?: string) {
     // First show the send screen (this will reset everything)
     await showSendScreen();
+    
+    // Store opReturnRaw for use when sending transaction, only for paybutton transactions
+    sendOpReturnRaw = isPayButtonTransaction(opReturnRaw) ? opReturnRaw : undefined;
+    updatePayButtonLogoVisibility();
     
     // Then set the address and make it readonly
     const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
@@ -413,6 +428,17 @@ function updateSendScreenLimits() {
 }
 
 // Update fee display
+function updatePayButtonLogoVisibility() {
+    const logoContainer = document.getElementById('paybutton-logo-container');
+    if (logoContainer) {
+        if (sendOpReturnRaw && isPayButtonTransaction(sendOpReturnRaw)) {
+            logoContainer.style.display = 'flex';
+        } else {
+            logoContainer.style.display = 'none';
+        }
+    }
+}
+
 function updateFeeDisplay() {
     const recipientInput = document.getElementById('recipient-address') as HTMLInputElement;
     const amountInput = document.getElementById('send-amount') as HTMLInputElement;
@@ -439,13 +465,13 @@ function updateFeeDisplay() {
         errorMessage = `Amount is too small`;
     }
     
-    // Try to estimate fee for the requested amount
-    let feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount);
+    // Try to estimate fee for the requested amount (include OP_RETURN if present)
+    let feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount, sendOpReturnRaw);
 
     // Insufficient balance - calculate for max spendable amount
     if (!feeEstimate) {
         amount = calculateMaxSpendableAmount(ecashWallet);
-        feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount);
+        feeEstimate = estimateTransactionFee(ecashWallet, recipientAddress, amount, sendOpReturnRaw);
         errorMessage = `Insufficient balance`;
     }
 
@@ -799,7 +825,24 @@ async function validateAndSend() {
     try {
         // Convert XEC to satoshis (1 XEC = 100 satoshis)
         const sats = Math.round(amount * 100);
-        await sendTransaction(ecashWallet, address, sats);
+        const builtTx = buildTx(ecashWallet, address, sats, sendOpReturnRaw);
+
+        if (sendOpReturnRaw && isPayButtonTransaction(sendOpReturnRaw)) {
+            // For PayButton transactions, we broadcast to the PayButton node first
+            // to reduce the latency. Then we attempt to broadcast to the main node
+            // as well which may fail because the tx might have been relayed already.
+            try {
+                const paybuttonChronik = new ChronikClient([
+                    'https://xec.paybutton.io',
+                ]);
+                await paybuttonChronik.broadcastTx(builtTx.tx.ser());
+                webViewLog(`Sent ${amount} ${config.ticker} to ${address} via PayButton`);
+            } catch (error) {
+                webViewError('PayButton broadcast failed,:', error);
+            }
+        }
+
+        await builtTx.broadcast();
         webViewLog(`Sent ${amount} ${config.ticker} to ${address}`);
     } catch (error) {
         webViewError('Failed to send transaction:', error);
@@ -1283,7 +1326,7 @@ async function handleQRScanResult(result: string) {
     if (bip21Result) {
         webViewLog('BIP21 URI scanned:', result);
         stopQRScanner();
-        await openSendScreenWithAddress(bip21Result.address, bip21Result.sats);
+        await openSendScreenWithAddress(bip21Result.address, bip21Result.sats, bip21Result.opReturnRaw);
         return;
     }
     
@@ -1489,6 +1532,12 @@ async function initializeApp() {
     // Set the back arrow icons
     for (const iconEl of document.querySelectorAll('.back-arrow-icon')) {
         (iconEl as HTMLImageElement).src = backArrowIcon;
+    }
+    
+    // Set the PayButton logo source
+    const paybuttonLogoEl = document.getElementById('paybutton-logo') as HTMLImageElement;
+    if (paybuttonLogoEl) {
+        paybuttonLogoEl.src = paybuttonLogo;
     }
 
     // Set the eCash logo source
@@ -1701,7 +1750,7 @@ async function handlePaymentRequest(event: any) {
             const parsed = parseBip21Uri(bip21Uri);
             if (parsed) {
                 // Open send screen with prefilled address and amount
-                openSendScreenWithAddress(parsed.address, parsed.sats);
+                openSendScreenWithAddress(parsed.address, parsed.sats, parsed.opReturnRaw);
             } else {
                 webViewError('Invalid BIP21 URI:', bip21Uri);
             }

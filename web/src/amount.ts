@@ -2,6 +2,7 @@ import {webViewError} from './common';
 import {Ecc, shaRmd160, TxBuilder, DEFAULT_DUST_SATS, DEFAULT_FEE_SATS_PER_KB, calcTxFee} from 'ecash-lib';
 import {ChronikClient} from 'chronik-client';
 import {Wallet} from 'ecash-wallet';
+import {buildTx} from './wallet';
 
 // Conversion function for display
 export function satsToXec(sats: number): number {
@@ -135,23 +136,13 @@ export function calculateMaxSpendableAmount(wallet: Wallet): number {
 }
 
 // Estimate transaction fee
-export function estimateTransactionFee(wallet: Wallet, recipientAddress: string, amountXEC: number): { feeXEC: number; totalXEC: number } | null {
+export function estimateTransactionFee(wallet: Wallet, recipientAddress: string, amountXEC: number, opReturnRaw?: string): { feeXEC: number; totalXEC: number } | null {
     try {
         // Convert XEC to satoshis (1 XEC = 100 satoshis)
         const amountSatoshis = Math.round(amountXEC * 100);
         
-        // Create the action with outputs
-        const action = wallet.action({
-            outputs: [
-                {
-                    address: recipientAddress,
-                    sats: BigInt(amountSatoshis)
-                }
-            ]
-        });
-        
         // Build the transaction to get fee estimate
-        const builtTx = action.build();
+        const builtTx = buildTx(wallet, recipientAddress, amountSatoshis, opReturnRaw);
         
         // Get fee in satoshis and convert to XEC
         const feeSatoshis = Number(builtTx.fee());

@@ -1,6 +1,5 @@
 import {Wallet} from 'ecash-wallet';
-import {Address} from 'ecash-lib';
-import {webViewLog, webViewError} from './common';
+import {Address, Script, OP_RETURN} from 'ecash-lib';
 import {config} from './config';
 
 
@@ -19,18 +18,30 @@ export function getAddress(wallet: Wallet): string | null {
     return Address.parse(wallet.address).withPrefix(config.addressPrefix).toString();
 }
 
-// Send a transaction
-export async function sendTransaction(wallet: Wallet, recipientAddress: string, sats: number) {
-    // Create the action with outputs
-    const action = wallet.action({
-        outputs: [
-            {
-                address: recipientAddress,
-                sats: BigInt(sats)
-            }
-        ]
+// Build a transaction with the given parameters
+export function buildTx(wallet: Wallet, recipientAddress: string, sats: number, opReturnRaw?: string) {
+    // Build outputs array
+    const outputs = [];
+    
+    // Add OP_RETURN output at first position if opReturnRaw is provided
+    if (opReturnRaw) {
+        // Prepend the OP_RETURN opcode and convert to Uint8Array
+        const opReturnData = Uint8Array.from(Buffer.from(OP_RETURN.toString(16) + opReturnRaw, 'hex'));
+        
+        // Add OP_RETURN output (must have 0 sats)
+        outputs.push({
+            sats: 0n,
+            script: new Script(opReturnData),
+        });
+    }
+
+    outputs.push({
+        address: recipientAddress,
+        sats: BigInt(sats)
     });
     
-    const builtTx = action.build();
-    await builtTx.broadcast();
+    // Create the action with outputs
+    const action = wallet.action({outputs});
+
+    return action.build();
 }
