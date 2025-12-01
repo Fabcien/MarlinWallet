@@ -197,11 +197,13 @@ async function showSendScreen() {
     if (sendAmountInput) {
         sendAmountInput.value = '5.46'; // Prefill with minimum valid amount
         sendAmountInput.classList.remove('valid', 'invalid');
+        sendAmountInput.removeAttribute('readonly'); // Allow editing for manual entry
     }
     
     // Reset slider
     if (amountSlider) {
         amountSlider.value = '5.46';
+        amountSlider.disabled = false; // Enable slider for manual entry
     }
     
     // Hide fee display
@@ -256,12 +258,16 @@ async function openSendScreenWithAddress(address: string, sats?: number) {
         if (sendAmountInput) {
             // Format to 2 decimal places
             sendAmountInput.value = amountXec.toFixed(2);
+            // Make amount field readonly when amount is provided from BIP21 URI
+            sendAmountInput.setAttribute('readonly', 'readonly');
             // Validate the amount
             validateAmountField();
         }
         
         if (amountSlider) {
             amountSlider.value = amountXec.toString();
+            // Disable slider when amount is provided from BIP21 URI
+            amountSlider.disabled = true;
         }
     }
     
