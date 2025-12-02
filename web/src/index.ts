@@ -250,16 +250,17 @@ async function openSendScreenWithAddress(address: string, sats?: number, opRetur
     await showSendScreen();
     
     // Store opReturnRaw for use when sending transaction, only for paybutton transactions
-    sendOpReturnRaw = isPayButtonTransaction(opReturnRaw) ? opReturnRaw : undefined;
+    sendOpReturnRaw = (opReturnRaw && isPayButtonTransaction(opReturnRaw)) ? opReturnRaw : undefined;
     updatePayButtonLogoVisibility();
     
     // Then set the address and make it readonly
     const recipientAddressInput = document.getElementById('recipient-address') as HTMLInputElement;
     if (recipientAddressInput) {
-        recipientAddressInput.value = address;
+        // Set readonly BEFORE setting value to prevent input event from triggering BIP21 parsing
         recipientAddressInput.setAttribute('readonly', 'readonly');
-        // Validate the address after setting it
-        validateAddressField();
+        recipientAddressInput.value = address;
+        // Mark as valid (we already validated it before calling this function)
+        recipientAddressInput.classList.add('valid');
     }
     
     // If an amount was provided (in satoshis), convert to XEC and set it
@@ -386,22 +387,85 @@ function validateAddressField() {
         return;
     }
     
-    const address = recipientInput.value.trim();
+    const input = recipientInput.value.trim();
     
     // Clear previous validation states
     recipientInput.classList.remove('invalid');
     recipientInput.classList.remove('valid');
     
-    if (address === '') {
+    if (input === '') {
         // Empty field - no validation state
         return;
     }
     
-    if (isValidECashAddress(address)) {
-        recipientInput.classList.add('valid');
-    } else {
-        recipientInput.classList.add('invalid');
+    // Try to parse as BIP21 URI first (this also handles plain addresses)
+    const bip21Result = parseBip21Uri(input);
+    if (bip21Result) {
+        // Valid BIP21 URI or plain address
+        // If field is readonly (set programmatically from QR/NFC), only validate the address
+        // If field is editable (user paste), populate all fields from the URI
+        if (recipientInput.hasAttribute('readonly')) {
+            // Just mark as valid, don't populate (already set by QR/NFC scan)
+            recipientInput.classList.add('valid');
+            return;
+        }
+
+       // User pasted a BIP21 URI - populate all fields
+       handleBip21Paste(bip21Result);
+       return;
     }
+    
+    // Otherwise validate as a plain address.
+    // This is only used for testnet where then BIP21 prefix differs from the address prefix.
+    // This implies that a valid address is also a valid BIP21 URI.
+    if (isValidECashAddress(input)) {
+        recipientInput.classList.add('valid');
+        return;
+    }
+
+    recipientInput.classList.add('invalid');
+}
+
+function handleBip21Paste(bip21Result: ReturnType<typeof parseBip21Uri>) {
+    if (!bip21Result) {
+        return;
+    }
+    
+    const recipientInput = document.getElementById('recipient-address') as HTMLInputElement;
+    const sendAmountInput = document.getElementById('send-amount') as HTMLInputElement;
+    const amountSlider = document.getElementById('amount-slider') as HTMLInputElement;
+    
+    // Set the address (plain address, not the full URI)
+    if (recipientInput) {
+        recipientInput.value = bip21Result.address;
+        recipientInput.setAttribute('readonly', 'readonly');
+        recipientInput.classList.add('valid');
+    }
+    
+    // Store opReturnRaw for use when sending transaction, only for paybutton transactions
+    sendOpReturnRaw = bip21Result.opReturnRaw && isPayButtonTransaction(bip21Result.opReturnRaw) 
+        ? bip21Result.opReturnRaw 
+        : undefined;
+    updatePayButtonLogoVisibility();
+    
+    // Set amount if provided
+    if (bip21Result.sats !== undefined && bip21Result.sats >= DEFAULT_DUST_SATS) {
+        const amountXec = satsToXec(bip21Result.sats);
+        
+        if (sendAmountInput) {
+            sendAmountInput.value = amountXec.toFixed(2);
+            sendAmountInput.setAttribute('readonly', 'readonly');
+            validateAmountField();
+        }
+        
+        if (amountSlider) {
+            amountSlider.value = amountXec.toString();
+            amountSlider.disabled = true;
+        }
+    }
+    
+    // Trigger fee calculation
+    updateFeeDisplay();
 }
 
 // Update send screen with maximum spendable amount
@@ -619,7 +683,7 @@ function validateAmountField() {
     }
     
     const amount = parseFloat(sendAmountInput.value);
-    const minAmount = 5.46;
+    const minAmount = satsToXec(Number(DEFAULT_DUST_SATS));
     const maxAmount = calculateMaxSpendableAmount(ecashWallet);
     
     // Clear previous validation states
