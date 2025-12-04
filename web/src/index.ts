@@ -21,14 +21,14 @@ import {isPayButtonTransaction} from './paybutton';
 import './main.css';
 
 // Icons
-import backArrowIcon from './back-arrow.svg';
-import marlin from './marlin.svg';
-import editIcon from './edit.svg';
-import historyIcon from './history.svg';
-import noCameraIcon from './camera.svg';
-import qrCodeIcon from './qrcode.svg';
-import settingsIcon from './settings.svg';
-import paybuttonLogo from './paybutton.svg';
+import backArrowIcon from './assets/back-arrow.svg';
+import marlin from './assets/marlin.svg';
+import editIcon from './assets/edit.svg';
+import historyIcon from './assets/history.svg';
+import noCameraIcon from './assets/camera.svg';
+import qrCodeIcon from './assets/qrcode.svg';
+import settingsIcon from './assets/settings.svg';
+import paybuttonLogo from './assets/paybutton.svg';
 
 // ============================================================================
 // GLOBALS
