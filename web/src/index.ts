@@ -7,7 +7,7 @@ import {ChronikClient, ConnectionStrategy} from 'chronik-client';
 import {DEFAULT_DUST_SATS} from 'ecash-lib';
 import PullToRefresh from 'pulltorefreshjs';
 import {TransactionHistoryManager} from './transaction-history';
-import {sendMessageToBackend, webViewLog, webViewError} from './common';
+import {sendMessageToBackend, webViewLog, webViewError, isReactNativeWebView} from './common';
 import {calculateTransactionAmountSats, satsToXec, calculateMaxSpendableAmount, estimateTransactionFee} from './amount';
 import {getAddress, WalletData, buildTx} from './wallet';
 import {getMnemonic, storeMnemonic, loadMnemonic, generateMnemonic, validateMnemonic} from './mnemonic';
@@ -1574,6 +1574,13 @@ async function syncWallet() {
 // Initialize the app when DOM is ready
 async function initializeApp() {
     webViewLog('Initializing app...');
+    
+    // Detect if running in standalone web browser (not in mobile WebView)
+    // In mobile app, the WebView has transparent background and shows React Native gradient
+    // In standalone web, we need to apply a CSS gradient background
+    if (!isReactNativeWebView()) {
+        document.body.classList.add('standalone-web');
+    }
     
     // Load saved settings
     const settings = loadSettings();
