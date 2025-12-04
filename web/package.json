@@ -1,7 +1,7 @@
 {
-  "name": "ecash-wallet-web",
-  "version": "1.0.0",
-  "description": "eCash Wallet Web Application",
+  "name": "marlin-wallet-web",
+  "version": "1.5.0",
+  "description": "Marlin Wallet Web Application",
   "main": "index.html",
   "scripts": {
     "build": "webpack --mode production",
@@ -31,6 +31,6 @@
     "typescript": "^5.1.6",
     "webpack": "^5.88.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.15.1"
+    "webpack-dev-server": "^5.2.2"
   }
 }
