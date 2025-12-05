@@ -2,13 +2,6 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-// Load keystore properties if they exist
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -87,52 +80,21 @@ android {
     ndkVersion rootProject.ext.ndkVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.marlinwallet.app"
+    namespace rootProject.ext.applicationId
     defaultConfig {
-        applicationId "com.marlinwallet.app"
+        applicationId rootProject.ext.applicationId
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.baseVersionCode
         versionName rootProject.ext.versionName
     }
-    signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-        release {
-            if (keystorePropertiesFile.exists()) {
-                // Resolve keystore path relative to android directory
-                def keystorePath = keystoreProperties['RELEASE_STORE_FILE']
-                def keystoreFile
-                if (keystorePath.startsWith('/')) {
-                    keystoreFile = file(keystorePath)
-                } else {
-                    // Resolve relative to android directory
-                    def androidDir = rootProject.rootDir
-                    def keystoreAbsolutePath = new File(androidDir, keystorePath).getAbsolutePath()
-                    keystoreFile = file(keystoreAbsolutePath)
-                }
-                storeFile keystoreFile
-                storePassword keystoreProperties['RELEASE_STORE_PASSWORD']
-                keyAlias keystoreProperties['RELEASE_KEY_ALIAS']
-                keyPassword keystoreProperties['RELEASE_KEY_PASSWORD']
-            }
-        }
-    }
+    
+    // Apply shared signing configs and build types
+    apply from: '../shared-build-config.gradle'
+    
+    // Override release buildType to add module-specific settings
     buildTypes {
-        debug {
-            signingConfig signingConfigs.debug
-        }
         release {
-            if (keystorePropertiesFile.exists()) {
-                signingConfig signingConfigs.release
-            } else {
-                // Fallback to debug if keystore.properties doesn't exist
-                signingConfig signingConfigs.debug
-            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
