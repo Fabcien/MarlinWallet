@@ -12,12 +12,12 @@ android {
     archivesBaseName = "marlin-wallet-wear"
     
     namespace "com.marlinwallet.app"
-    compileSdk 35
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
         applicationId "com.marlinwallet.app"
         minSdk 28  // Wear OS 3.0+
-        targetSdk 35
+        targetSdk rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.baseVersionCode + 1000
         versionName rootProject.ext.versionName
     }
